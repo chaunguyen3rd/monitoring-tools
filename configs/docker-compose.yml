@@ -1,8 +1,13 @@
 version: '3.8'
 
 networks:
-  monitoring:
+  cw-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: cw-net
 
 volumes:
   prometheus_data: {}
@@ -30,7 +35,9 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -44,11 +51,13 @@ services:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)'
     ports:
       - "9100:9100"
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -63,7 +72,9 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
 
   loki:
     image: grafana/loki:latest
@@ -75,7 +86,9 @@ services:
     ports:
       - "3100:3100"
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
 
   promtail:
     image: grafana/promtail:latest
@@ -87,7 +100,9 @@ services:
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
 
   grafana:
     image: grafana/grafana:latest
@@ -105,7 +120,9 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
       
   alertmanager:
     image: prom/alertmanager:latest
@@ -121,4 +138,6 @@ services:
     ports:
       - "9093:9093"
     networks:
-      - monitoring
+      - cw-net
+    dns:
+      - 10.0.0.2
