@@ -37,15 +37,68 @@ if ! command -v docker-compose &> /dev/null; then
   chmod +x /usr/local/bin/docker-compose
 fi
 
-# Copy configuration files
-echo -e "${BLUE}Copying configuration files...${NC}"
-cp docker-compose.yml configs/
-cp configs/prometheus/prometheus.yml configs/prometheus/
-cp configs/prometheus/alert-rules.yml configs/prometheus/
-cp configs/loki/loki-config.yml configs/loki/
-cp configs/promtail/promtail-config.yml configs/promtail/
-cp configs/alertmanager/alertmanager.yml configs/alertmanager/
-cp configs/alertmanager/templates/email.tmpl configs/alertmanager/templates/
+# Check if the config files exist, if not create them
+echo -e "${BLUE}Checking configuration files...${NC}"
+
+# Create prometheus.yml if it doesn't exist
+if [ ! -f configs/prometheus/prometheus.yml ]; then
+  echo -e "${BLUE}Creating prometheus.yml...${NC}"
+  cp example-configs/prometheus/prometheus.yml configs/prometheus/prometheus.yml
+fi
+
+# Create alert-rules.yml if it doesn't exist
+if [ ! -f configs/prometheus/alert-rules.yml ]; then
+  echo -e "${BLUE}Creating alert-rules.yml...${NC}"
+  cp example-configs/prometheus/alert-rules.yml configs/prometheus/alert-rules.yml
+fi
+
+# Create recording-rules.yml if it doesn't exist
+if [ ! -f configs/prometheus/recording-rules.yml ]; then
+  echo -e "${BLUE}Creating recording-rules.yml...${NC}"
+  cp example-configs/prometheus/recording-rules.yml configs/prometheus/recording-rules.yml
+fi
+
+# Create loki-config.yml if it doesn't exist
+if [ ! -f configs/loki/loki-config.yml ]; then
+  echo -e "${BLUE}Creating loki-config.yml...${NC}"
+  cp example-configs/loki/loki-config.yml configs/loki/loki-config.yml
+fi
+
+# Create promtail-config.yml if it doesn't exist
+if [ ! -f configs/promtail/promtail-config.yml ]; then
+  echo -e "${BLUE}Creating promtail-config.yml...${NC}"
+  cp example-configs/promtail/promtail-config.yml configs/promtail/promtail-config.yml
+fi
+
+# Create alertmanager.yml if it doesn't exist
+if [ ! -f configs/alertmanager/alertmanager.yml ]; then
+  echo -e "${BLUE}Creating alertmanager.yml...${NC}"
+  cp example-configs/alertmanager/alertmanager.yml configs/alertmanager/alertmanager.yml
+fi
+
+# Create email template if it doesn't exist
+if [ ! -f configs/alertmanager/templates/email.tmpl ]; then
+  echo -e "${BLUE}Creating email template...${NC}"
+  cp example-configs/alertmanager/templates/email.tmpl configs/alertmanager/templates/email.tmpl
+fi
+
+# Create Grafana datasources if they don't exist
+mkdir -p configs/grafana/datasources
+if [ ! -f configs/grafana/datasources/prometheus.yml ]; then
+  echo -e "${BLUE}Creating Prometheus datasource for Grafana...${NC}"
+  cp example-configs/grafana/datasources/prometheus.yml configs/grafana/datasources/prometheus.yml
+fi
+
+if [ ! -f configs/grafana/datasources/loki.yml ]; then
+  echo -e "${BLUE}Creating Loki datasource for Grafana...${NC}"
+  cp example-configs/grafana/datasources/loki.yml configs/grafana/datasources/loki.yml
+fi
+
+# Copy docker-compose.yml if it's not in the configs directory
+if [ ! -f configs/docker-compose.yml ]; then
+  echo -e "${BLUE}Copying docker-compose.yml to configs directory...${NC}"
+  cp docker-compose.yml configs/
+fi
 
 # If .env file doesn't exist, create from example
 if [ ! -f .env ]; then
@@ -77,7 +130,7 @@ fi
 
 # Start the monitoring stack
 echo -e "${BLUE}Starting monitoring stack...${NC}"
-docker-compose up -d
+cd configs && docker-compose up -d
 
 # Verify services are running
 echo -e "${BLUE}Verifying services...${NC}"
