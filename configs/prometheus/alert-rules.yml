@@ -1,0 +1,87 @@
+groups:
+  - name: host_and_container_alerts
+    rules:
+      # Host-level alerts
+      - alert: HostHighCPULoad
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU load on {{ $labels.instance }}"
+          description: "CPU load is above 80% for 5 minutes (current value: {{ $value }}%)"
+
+      - alert: HostOutOfMemory
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host out of memory on {{ $labels.instance }}"
+          description: "Node memory is filling up (< 10% left) (current value: {{ $value }}%)"
+
+      - alert: HostOutOfDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host out of disk space on {{ $labels.instance }}"
+          description: "Disk space is below 10% (current value: {{ $value }}%)"
+
+      - alert: HostHighLoad
+        expr: node_load1 > (count by (instance) (node_cpu_seconds_total{mode="idle"}) * 1.5)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host high load on {{ $labels.instance }}"
+          description: "Host load is high (current value: {{ $value }})"
+
+      # Container-level alerts
+      - alert: ContainerHighCPU
+        expr: sum(rate(container_cpu_usage_seconds_total[5m])) by (name) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU usage"
+          description: "Container {{ $labels.name }} CPU usage is above 50% for 5 minutes (current value: {{ $value }})"
+
+      - alert: ContainerHighMemory
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high memory usage"
+          description: "Container {{ $labels.name }} memory usage is above 80% for 5 minutes (current value: {{ $value }}%)"
+
+      # Service availability
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} on {{ $labels.instance }} is down"
+          description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
+
+      # Prometheus self-monitoring
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus target missing ({{ $labels.instance }})"
+          description: "A Prometheus target has disappeared. An exporter might be crashed. ({{ $labels.instance }})"
+
+      - alert: PrometheusTooManyRestarts
+        expr: changes(process_start_time_seconds{job=~"prometheus|alertmanager"}[15m]) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus too many restarts (instance {{ $labels.instance }})"
+          description: "Prometheus has restarted more than twice in the last 15 minutes. It might be crashlooping. ({{ $labels.instance }})"

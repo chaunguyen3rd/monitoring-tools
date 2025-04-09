@@ -1,0 +1,146 @@
+{{ define "email.default.subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}
+{{ end }}
+
+{{ define "email.default.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>{{ template "email.default.subject" . }}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333333;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: {{ if eq .Status "firing" }}#e74c3c{{ else }}#2ecc71{{ end }};
+      color: white;
+      padding: 15px;
+      border-radius: 5px 5px 0 0;
+    }
+    .content {
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+    }
+    table.alerts {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .alerts th {
+      text-align: left;
+      padding: 8px;
+      background-color: #f2f2f2;
+      border: 1px solid #ddd;
+    }
+    .alerts td {
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+    .alerts tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .alert-details {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    .footer {
+      font-size: 12px;
+      color: #777;
+      text-align: center;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>
+        {{ .Status | toUpper }}{{ if eq .Status "firing" }}: {{ .Alerts.Firing | len }}{{ end }}
+      </h2>
+    </div>
+    <div class="content">
+      {{ if gt (len .Alerts.Firing) 0 }}
+      <h3>Firing Alerts</h3>
+      <table class="alerts">
+        <tr>
+          <th>Alert</th>
+          <th>Instance</th>
+          <th>Summary</th>
+        </tr>
+        {{ range .Alerts.Firing }}
+        <tr>
+          <td>{{ .Labels.alertname }}</td>
+          <td>{{ .Labels.instance }}</td>
+          <td>{{ .Annotations.summary }}</td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <div class="alert-details">
+              <strong>Description:</strong> {{ .Annotations.description }}<br/>
+              <strong>Started:</strong> {{ .StartsAt | since }}<br/>
+              <strong>Labels:</strong><br/>
+              {{ range .Labels.SortedPairs }}
+                {{ .Name }} = {{ .Value }}<br/>
+              {{ end }}
+            </div>
+          </td>
+        </tr>
+        {{ end }}
+      </table>
+      {{ end }}
+
+      {{ if gt (len .Alerts.Resolved) 0 }}
+      <h3>Resolved Alerts</h3>
+      <table class="alerts">
+        <tr>
+          <th>Alert</th>
+          <th>Instance</th>
+          <th>Summary</th>
+        </tr>
+        {{ range .Alerts.Resolved }}
+        <tr>
+          <td>{{ .Labels.alertname }}</td>
+          <td>{{ .Labels.instance }}</td>
+          <td>{{ .Annotations.summary }}</td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            <div class="alert-details">
+              <strong>Description:</strong> {{ .Annotations.description }}<br/>
+              <strong>Started:</strong> {{ .StartsAt | since }}<br/>
+              <strong>Resolved:</strong> {{ .EndsAt | since }}<br/>
+              <strong>Labels:</strong><br/>
+              {{ range .Labels.SortedPairs }}
+                {{ .Name }} = {{ .Value }}<br/>
+              {{ end }}
+            </div>
+          </td>
+        </tr>
+        {{ end }}
+      </table>
+      {{ end }}
+
+      <p><a href="{{ template "__alertmanagerURL" . }}">View in Alertmanager</a></p>
+    </div>
+    <div class="footer">
+      <p>This is an automated alert from the monitoring system. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
+{{ end }}
