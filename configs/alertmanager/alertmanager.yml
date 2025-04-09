@@ -5,7 +5,7 @@ global:
   smtp_auth_username: "alertmanager"
   smtp_auth_password: "password"
   smtp_require_tls: true
-  # slack_api_url: 'https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK'
+  slack_api_url: "https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK"
 
 templates:
   - "/etc/alertmanager/templates/*.tmpl"

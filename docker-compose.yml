@@ -77,7 +77,6 @@ services:
     container_name: loki
     restart: unless-stopped
     volumes:
-      - ./configs/loki/loki-config.yml:/etc/loki/local-config.yaml
       - loki_data:/loki
     ports:
       - "3100:3100"
