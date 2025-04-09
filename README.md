@@ -1,215 +1,183 @@
-# Monitoring Toolkit for EC2 and Docker Containers
+# Monitoring Stack
 
-A comprehensive monitoring solution for EC2 instances and Docker containers using Prometheus, Grafana, Loki, Alertmanager, and related exporters.
+A complete monitoring solution for Docker containers and hosts using Prometheus, Grafana, Loki, AlertManager, and related exporters.
 
 ## Overview
 
-This monitoring toolkit provides a complete stack for monitoring remote EC2 instances and Docker containers with:
+This monitoring stack provides comprehensive monitoring capabilities:
 
 - **Prometheus**: For metrics collection and storage
 - **Grafana**: For visualization and dashboarding
 - **Loki & Promtail**: For log aggregation
-- **Alertmanager**: For alert handling and notifications
+- **AlertManager**: For alert handling and notifications
 - **Node Exporter**: For host-level metrics
 - **cAdvisor**: For container metrics
 
-![Architecture Overview](docs/architecture_diagram.png)
+## Project Structure
 
-## Features
-
-- **Complete Observability**: Metrics, logs, and alerts in one solution
-- **Container-Aware**: Detailed monitoring of Docker containers
-- **Alerting**: Configurable alerts via email, Slack, and more
-- **Pre-built Dashboards**: Ready-to-use dashboards for common monitoring needs
-- **Deployment Automation**: Scripts and Ansible playbooks for easy deployment
-- **Remote Monitoring**: Monitor multiple EC2 instances from a central location
+```txt
+monitoring-stack/
+├── docker-compose.yml                  # Main docker-compose file
+├── install.sh                          # Installation script
+├── .env                                # Environment variables
+├── configs/                            # Configuration files
+│   ├── prometheus/                     # Prometheus configs
+│   ├── alertmanager/                   # AlertManager configs
+│   ├── loki/                           # Loki configs
+│   ├── promtail/                       # Promtail configs
+│   └── grafana/                        # Grafana configs
+└── dashboards/                         # Grafana dashboards
+```
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- An EC2 instance with SSH access
-- Basic understanding of monitoring concepts
-- SMTP server for email alerts (optional)
-- Slack webhook for Slack notifications (optional)
+- Linux host with sufficient resources
+- Root access for installation
 
 ## Quick Start
-
-### Local Installation
 
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/yourusername/monitoring-toolkit.git
-   cd monitoring-toolkit
+   git clone https://github.com/yourusername/monitoring-stack.git
+   cd monitoring-stack
    ```
 
-2. Run the installation script:
+2. Make the installation script executable:
 
    ```bash
-   sudo ./scripts/install.sh
+   chmod +x install.sh
    ```
 
-3. Access the interfaces:
-   - Grafana: <http://localhost:3000> (default credentials: admin/admin)
-   - Prometheus: <http://localhost:9090>
-   - Alertmanager: <http://localhost:9093>
-
-### Remote EC2 Monitoring
-
-1. Update the inventory file:
+3. Run the installation script:
 
    ```bash
-   nano ansible/inventory/hosts
+   sudo ./install.sh
    ```
 
-2. Deploy to remote instances:
+4. Access the interfaces:
+   - **Grafana**: <http://localhost:3000> (default credentials: admin/admin)
+   - **Prometheus**: <http://localhost:9090>
+   - **AlertManager**: <http://localhost:9093>
+   - **Loki**: <http://localhost:3100>
 
-   ```bash
-   cd ansible
-   ansible-playbook playbooks/deploy-monitoring.yml
-   ```
+## Components & Ports
+
+- **Prometheus** (port 9090): Time-series database for metrics
+- **Node Exporter** (port 9100): Host metrics collector
+- **cAdvisor** (port 8080): Container metrics collector
+- **Loki** (port 3100): Log aggregation system
+- **Promtail**: Log collector for Loki (no external port)
+- **AlertManager** (port 9093): Alert handling and notifications
+- **Grafana** (port 3000): Visualization and dashboard platform
 
 ## Configuration
 
-### Alerting
+All configuration files are located in the `configs/` directory:
 
-Edit the Alertmanager configuration to set up notification channels:
+### Prometheus
 
-```bash
-nano configs/alertmanager/alertmanager.yml
-```
+- `configs/prometheus/prometheus.yml`: Main Prometheus configuration
+- `configs/prometheus/alert-rules.yml`: Alert rules
 
-Update the following sections:
+### AlertManager
 
-- Global SMTP settings for email notifications
-- Slack webhook URL for Slack notifications
-- Routes and receivers for alert routing
+- `configs/alertmanager/alertmanager.yml`: AlertManager configuration
+- `configs/alertmanager/templates/email.tmpl`: Email notification template
 
-### Adding Alert Rules
+### Loki & Promtail
 
-Define new alert rules in the Prometheus configuration:
+- `configs/loki/loki-config.yml`: Loki configuration
+- `configs/promtail/promtail-config.yml`: Promtail configuration
+
+### Grafana
+
+- `configs/grafana/datasources/datasources.yml`: Grafana data sources
+- `configs/grafana/dashboards/dashboards.yml`: Dashboard provisioning
+
+## Customizing Alerts
+
+To modify alert rules, edit the Prometheus alert rules file:
 
 ```bash
 nano configs/prometheus/alert-rules.yml
 ```
 
-Example alert rule:
+## Setting Up Alert Notifications
 
-```yaml
-- alert: HighCPUUsage
-  expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
-  for: 5m
-  labels:
-    severity: warning
-  annotations:
-    summary: "High CPU usage on {{ $labels.instance }}"
-    description: "CPU usage is above 90% for 5 minutes (current value: {{ $value }}%)"
-```
-
-### Configuring Dashboards
-
-Custom dashboards can be added to the `dashboards` directory:
+Configure email notifications by updating the AlertManager configuration:
 
 ```bash
-cp your-dashboard.json dashboards/
+nano configs/alertmanager/alertmanager.yml
 ```
 
-## Project Structure
-
-```txt
-monitoring-toolkit/
-├── ansible/                        # Deployment automation
-├── configs/                        # Configuration files
-│   ├── prometheus/                 # Prometheus configs
-│   ├── alertmanager/              # Alertmanager configs
-│   ├── grafana/                    # Grafana configs
-│   ├── loki/                       # Loki configs
-│   ├── promtail/                   # Promtail configs
-│   └── cadvisor/                   # cAdvisor configs
-├── dashboards/                     # Grafana dashboards
-├── scripts/                        # Utility scripts
-├── terraform/                      # Infrastructure as code (optional)
-└── docs/                           # Documentation
-```
-
-## Customization
-
-### Adding New Targets
-
-To monitor additional EC2 instances or containers:
-
-1. Update the Prometheus configuration:
-
-   ```bash
-   nano configs/prometheus/prometheus.yml
-   ```
-
-2. Add new targets under `scrape_configs`:
+1. Update the SMTP settings:
 
    ```yaml
-   - job_name: 'new-ec2-instance'
-     static_configs:
-       - targets: ['new-ec2-ip:9100']
-         labels:
-           instance: new-ec2-name
+   global:
+     smtp_smarthost: "your-smtp-server:587"
+     smtp_from: "alerts@example.com"
+     smtp_auth_username: "your-username"
+     smtp_auth_password: "your-password"
    ```
 
-### Persistent Storage
+2. For Slack notifications, uncomment and update the webhook URL:
 
-By default, the monitoring data uses Docker volumes. For production, consider using more robust storage:
+   ```yaml
+   global:
+     slack_api_url: 'https://hooks.slack.com/services/YOUR_WEBHOOK_URL'
+   ```
 
-```yaml
-volumes:
-  prometheus_data:
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/path/to/prometheus/data'
+After making changes, restart AlertManager:
+
+```bash
+docker-compose restart alertmanager
 ```
 
 ## Maintenance
 
-### Backup
-
-Backup your configuration and data:
+### Stopping the Stack
 
 ```bash
-./scripts/backup.sh
+docker-compose down
 ```
 
-### Updates
-
-Update the monitoring stack:
+### Updating Components
 
 ```bash
-./scripts/update.sh
+docker-compose pull
+docker-compose up -d
 ```
 
-### Troubleshooting
+### Data Persistence
 
-Common issues and solutions are documented in `docs/troubleshooting.md`.
+All data is stored in Docker volumes:
 
-## Security Considerations
+- `prometheus_data`: Metrics history
+- `grafana_data`: Dashboards, users, etc.
+- `loki_data`: Log data
+- `alertmanager_data`: Alert history
 
-- Configure proper authentication for all components
-- Use HTTPS for production deployments
-- Restrict network access using security groups
-- Regularly update the components to patch security vulnerabilities
+## Troubleshooting
 
-## Contributing
+If services fail to start, check logs:
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+```bash
+# Check all logs
+docker-compose logs
+
+# Check specific service logs
+docker-compose logs prometheus
+docker-compose logs grafana
+```
+
+Common issues:
+
+- Port conflicts: Make sure ports 3000, 9090, 9093, 9100, 8080, and 3100 are available
+- Permissions issues: Make sure Docker has permission to mount volumes
+- Resource limitations: Ensure your system has enough memory and CPU
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgements
-
-- [Prometheus](https://prometheus.io/)
-- [Grafana](https://grafana.com/)
-- [Loki](https://grafana.com/oss/loki/)
-- [cAdvisor](https://github.com/google/cadvisor)
-- [Node Exporter](https://github.com/prometheus/node_exporter)
-- [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/)
+MIT License

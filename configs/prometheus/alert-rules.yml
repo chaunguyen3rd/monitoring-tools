@@ -66,22 +66,3 @@ groups:
         annotations:
           summary: "Service {{ $labels.job }} on {{ $labels.instance }} is down"
           description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
-
-      # Prometheus self-monitoring
-      - alert: PrometheusTargetMissing
-        expr: up == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Prometheus target missing ({{ $labels.instance }})"
-          description: "A Prometheus target has disappeared. An exporter might be crashed. ({{ $labels.instance }})"
-
-      - alert: PrometheusTooManyRestarts
-        expr: changes(process_start_time_seconds{job=~"prometheus|alertmanager"}[15m]) > 2
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Prometheus too many restarts (instance {{ $labels.instance }})"
-          description: "Prometheus has restarted more than twice in the last 15 minutes. It might be crashlooping. ({{ $labels.instance }})"
