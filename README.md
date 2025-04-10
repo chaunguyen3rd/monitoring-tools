@@ -157,9 +157,9 @@ Backups automatically move through these storage tiers:
 
 | Age of Backup | Storage Class | Benefits |
 |---------------|---------------|----------|
-| 0-7 days      | S3 Standard   | Fast retrieval, no minimum storage duration |
-| 8-30 days     | S3 Standard-IA| ~54% cost savings, small retrieval fee |
-| 30+ days      | Deleted       | Prevents unnecessary storage costs |
+| 0-30 days     | S3 Standard   | Fast retrieval, no minimum storage duration |
+| 31-60 days    | S3 Standard-IA| ~54% cost savings, small retrieval fee |
+| 60+ days      | Deleted       | Prevents unnecessary storage costs |
 
 ### Setting Up the Backup System
 
@@ -197,21 +197,24 @@ Backups automatically move through these storage tiers:
    # Install the cron job
    sudo ./backup-cron-setup.sh
    
-   # Set up S3 lifecycle rules for the specific prefix
-   # This won't affect other files in your bucket
+   # Check or update S3 lifecycle rules for the specific prefix
+   # The script will detect if the policy is already enabled
    sudo ./setup-s3-lifecycle.sh
+   
+   # If you need to force an update to the policy, use:
+   # sudo ./setup-s3-lifecycle.sh --force
    ```
 
 ### About the S3 Lifecycle Configuration
 
-The `setup-s3-lifecycle.sh` script is a critical component that:
+The `setup-s3-lifecycle.sh` script now checks for an existing lifecycle policy:
 
-- Configures your existing S3 bucket with a prefix-specific lifecycle policy
-- Sets up rules to transition backups from S3 Standard to S3 Standard-IA after 7 days
-- Establishes automatic deletion of backups older than 30 days
+- Detects if the MonitoringBackupsLifecycle policy is already enabled
+- Shows current settings if the policy exists
+- Provides an option to update the policy with the `--force` flag
 - Affects only files with the specified prefix (not other content in your bucket)
 
-This script uses the `s3-lifecycle-policy.json` file, which defines the exact lifecycle rules to apply to your S3 bucket prefix:
+The script manages a lifecycle policy that:
 
 ```json
 {
@@ -224,12 +227,12 @@ This script uses the `s3-lifecycle-policy.json` file, which defines the exact li
             },
             "Transitions": [
                 {
-                    "Days": 7,
+                    "Days": 30,
                     "StorageClass": "STANDARD_IA"
                 }
             ],
             "Expiration": {
-                "Days": 30
+                "Days": 60
             }
         }
     ]

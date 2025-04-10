@@ -12,7 +12,7 @@ BACKUP_DIR="/opt/backup/monitoring"
 DATA_DIR="./data"                       # Location of bind-mounted volumes
 S3_BUCKET="your-backup-bucket-name"     # Replace with your S3 bucket name
 S3_PREFIX="monitoring-backups"          # Path prefix in the S3 bucket
-RETENTION_DAYS=7                        # Number of days to keep backups
+RETENTION_DAYS=30                       # Number of days to keep backups
 LOG_FILE="/var/log/monitoring-backup.log"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 DAY_OF_WEEK=$(date +"%u")               # 1-7, where 1 is Monday and 7 is Sunday
@@ -125,7 +125,8 @@ upload_to_s3() {
     
     log "Uploading $BACKUP_FILE to S3"
     
-    aws s3 cp $BACKUP_PATH "s3://${S3_BUCKET}/${S3_PREFIX}/${BACKUP_FILE}"
+    # Upload with standard storage class
+    aws s3 cp $BACKUP_PATH "s3://${S3_BUCKET}/${S3_PREFIX}/${BACKUP_FILE}" --storage-class STANDARD
     UPLOAD_STATUS=$?
     
     if [ $UPLOAD_STATUS -eq 0 ]; then
@@ -139,33 +140,18 @@ upload_to_s3() {
     fi
 }
 
-# Function to clean up old backups (local and S3)
+# Function to clean up old local backups
+# Note: S3 cleanup is handled by the already configured lifecycle policies
 cleanup_old_backups() {
     # Local cleanup
-    log "Cleaning up local backups older than $RETENTION_DAYS days"
-    find $BACKUP_DIR -name "monitoring_*.tar.gz" -type f -mtime +$RETENTION_DAYS -delete
+    log "Cleaning up local backups older than 7 days"
+    # We keep local backups only for 7 days to save space, S3 keeps them longer
+    find $BACKUP_DIR -name "monitoring_*.tar.gz" -type f -mtime +7 -delete
     
-    # S3 cleanup
-    log "Cleaning up S3 backups older than $RETENTION_DAYS days"
-    
-    # Calculate the cutoff date (today - retention days)
-    CUTOFF_DATE=$(date -d "-${RETENTION_DAYS} days" +"%Y-%m-%d")
-    
-    # List all objects in the S3 bucket/prefix
-    aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX}/" | while read -r line; do
-        # Extract the date and filename
-        date_str=$(echo $line | awk '{print $1}')
-        file_name=$(echo $line | awk '{print $4}')
-        
-        # Convert date to comparable format
-        file_date=$(date -d "$date_str" +"%Y-%m-%d")
-        
-        # Compare dates and delete if older than cutoff
-        if [[ "$file_date" < "$CUTOFF_DATE" ]]; then
-            log "Deleting old S3 backup: $file_name"
-            aws s3 rm "s3://${S3_BUCKET}/${S3_PREFIX}/${file_name}"
-        fi
-    done
+    log "Note: S3 retention is handled by the MonitoringBackupsLifecycle policy"
+    log "   - 0-30 days: S3 Standard"
+    log "   - 31-60 days: S3 Standard-IA" 
+    log "   - After 60 days: Deleted automatically"
 }
 
 # Main execution

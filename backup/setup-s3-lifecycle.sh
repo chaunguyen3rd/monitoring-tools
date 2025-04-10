@@ -24,12 +24,12 @@ cat > /tmp/lifecycle-config.json << EOL
             },
             "Transitions": [
                 {
-                    "Days": 7,
+                    "Days": 30,
                     "StorageClass": "STANDARD_IA"
                 }
             ],
             "Expiration": {
-                "Days": 30
+                "Days": 60
             }
         }
     ]
@@ -44,9 +44,9 @@ aws s3api put-bucket-lifecycle-configuration --bucket $S3_BUCKET --lifecycle-con
 if [ $? -eq 0 ]; then
     echo "✅ S3 lifecycle policy successfully applied!"
     echo "Your backups will now:"
-    echo "  - Stay in S3 Standard for 7 days"
-    echo "  - Transition to S3 Standard-IA from days 8-30"
-    echo "  - Be automatically deleted after 30 days"
+    echo "  - Stay in S3 Standard for 30 days"
+    echo "  - Transition to S3 Standard-IA from days 31-60"
+    echo "  - Be automatically deleted after 60 days"
     echo ""
     echo "IMPORTANT: This lifecycle policy ONLY affects files with the prefix 'monitoring-backups/'"
     echo "Other files in your bucket are NOT affected by this policy."
