@@ -34,7 +34,7 @@
         "uid": "loki"
       },
       "gridPos": {
-        "h": 10,
+        "h": 12,
         "w": 24,
         "x": 0,
         "y": 0
@@ -45,7 +45,7 @@
         "enableLogDetails": true,
         "prettifyLogMessage": false,
         "showCommonLabels": false,
-        "showLabels": false,
+        "showLabels": true,
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
@@ -56,46 +56,11 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{job=\"varlogs\"}",
+          "expr": "{job=\"docker\", container_name=\"$container\"}",
           "refId": "A"
         }
       ],
-      "title": "System Logs",
-      "type": "logs"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 10
-      },
-      "id": 2,
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "{job=\"docker\"}",
-          "refId": "A"
-        }
-      ],
-      "title": "Docker Logs",
+      "title": "Logs for $container",
       "type": "logs"
     },
     {
@@ -160,9 +125,9 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 12
       },
-      "id": 3,
+      "id": 2,
       "options": {
         "legend": {
           "calcs": [
@@ -184,12 +149,12 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({job=~\"docker|varlogs\"}[1m])) by (job)",
+          "expr": "sum(count_over_time({job=\"docker\", container_name=\"$container\"}[1m]))",
           "refId": "A",
-          "legendFormat": "{{job}}"
+          "legendFormat": "Log Volume"
         }
       ],
-      "title": "Log Volume Over Time",
+      "title": "Log Volume Over Time for $container",
       "type": "timeseries"
     },
     {
@@ -201,9 +166,9 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 20
       },
-      "id": 4,
+      "id": 3,
       "options": {
         "dedupStrategy": "none",
         "enableLogDetails": true,
@@ -220,11 +185,11 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{job=\"docker\"} |~ \"(?i)error|warn|exception|fail\"",
+          "expr": "{job=\"docker\", container_name=\"$container\"} |~ \"(?i)error|warn|exception|fail\"",
           "refId": "A"
         }
       ],
-      "title": "Error and Warning Logs",
+      "title": "Error and Warning Logs for $container",
       "type": "logs"
     }
   ],
@@ -233,10 +198,41 @@
   "style": "dark",
   "tags": [
     "logs",
-    "loki"
+    "loki",
+    "containers"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values(container_name)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Container",
+        "multi": false,
+        "name": "container",
+        "options": [],
+        "query": {
+          "label": "container_name",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-1h",
@@ -244,8 +240,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Logs Dashboard",
-  "uid": "logs-dashboard",
+  "title": "Container Logs Dashboard",
+  "uid": "container-logs-dashboard",
   "version": 1,
   "weekStart": ""
 }

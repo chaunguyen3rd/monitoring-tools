@@ -26,7 +26,13 @@ monitoring-stack/
 │   ├── loki/                           # Loki configs
 │   ├── promtail/                       # Promtail configs
 │   └── grafana/                        # Grafana configs
-└── dashboards/                         # Grafana dashboards
+├── dashboards/                         # Grafana dashboards
+└── backup/                             # Backup solution
+    ├── docker-volume-backup.sh         # Main backup script
+    ├── backup-cron-setup.sh            # Cron setup script
+    ├── restore-backup.sh               # Backup restoration script
+    ├── setup-s3-lifecycle.sh           # S3 lifecycle configuration
+    └── s3-lifecycle-policy.json        # S3 lifecycle policy definition
 ```
 
 ## Prerequisites
@@ -34,6 +40,7 @@ monitoring-stack/
 - Docker and Docker Compose
 - Linux host with sufficient resources
 - Root access for installation
+- AWS account (for backup solution)
 
 ## Quick Start
 
@@ -134,6 +141,155 @@ After making changes, restart AlertManager:
 ```bash
 docker-compose restart alertmanager
 ```
+
+## Backup Solution
+
+The monitoring stack includes a comprehensive backup solution that performs:
+
+- Full backups every Sunday at 22:00 UTC
+- Incremental backups Monday-Saturday at 22:00 UTC
+- Uploads to Amazon S3 with intelligent storage tiering
+- Automated retention management
+
+### Storage Tiering Strategy
+
+Backups automatically move through these storage tiers:
+
+| Age of Backup | Storage Class | Benefits |
+|---------------|---------------|----------|
+| 0-7 days      | S3 Standard   | Fast retrieval, no minimum storage duration |
+| 8-30 days     | S3 Standard-IA| ~54% cost savings, small retrieval fee |
+| 30+ days      | Deleted       | Prevents unnecessary storage costs |
+
+### Setting Up the Backup System
+
+1. Install the AWS CLI:
+
+   ```bash
+   sudo apt-get update && sudo apt-get install -y awscli
+   # Or for Amazon Linux/RHEL:
+   # sudo yum install -y awscli
+   ```
+
+2. Configure AWS credentials:
+
+   ```bash
+   aws configure
+   ```
+
+3. Use your existing S3 bucket:
+
+4. Set up the backup system:
+
+   ```bash
+   cd backup
+   chmod +x *.sh
+   
+   # Edit scripts to set your existing S3 bucket name and prefix
+   nano docker-volume-backup.sh
+   # Change the S3_BUCKET variable to your existing bucket name
+   # Consider changing S3_PREFIX to "monitoring-backups" or another unique prefix
+   # to avoid conflicts with other content in the bucket
+   
+   nano setup-s3-lifecycle.sh
+   # Update the S3_BUCKET variable to match your existing bucket
+   
+   # Install the cron job
+   sudo ./backup-cron-setup.sh
+   
+   # Set up S3 lifecycle rules for the specific prefix
+   # This won't affect other files in your bucket
+   sudo ./setup-s3-lifecycle.sh
+   ```
+
+### About the S3 Lifecycle Configuration
+
+The `setup-s3-lifecycle.sh` script is a critical component that:
+
+- Configures your existing S3 bucket with a prefix-specific lifecycle policy
+- Sets up rules to transition backups from S3 Standard to S3 Standard-IA after 7 days
+- Establishes automatic deletion of backups older than 30 days
+- Affects only files with the specified prefix (not other content in your bucket)
+
+This script uses the `s3-lifecycle-policy.json` file, which defines the exact lifecycle rules to apply to your S3 bucket prefix:
+
+```json
+{
+    "Rules": [
+        {
+            "ID": "MonitoringBackupsLifecycle",
+            "Status": "Enabled",
+            "Filter": {
+                "Prefix": "monitoring-backups/"
+            },
+            "Transitions": [
+                {
+                    "Days": 7,
+                    "StorageClass": "STANDARD_IA"
+                }
+            ],
+            "Expiration": {
+                "Days": 30
+            }
+        }
+    ]
+}
+```
+
+The script only needs to be run once during initial setup or if you change your retention policy. The lifecycle rules it creates will then automatically manage all backups according to the storage tiering strategy.
+
+You can verify the lifecycle configuration with:
+
+```bash
+aws s3api get-bucket-lifecycle-configuration --bucket your-backup-bucket-name
+```
+
+### Verifying Backups
+
+Check your backup logs:
+
+```bash
+tail -f /var/log/monitoring-backup.log
+```
+
+List backup files in S3:
+
+```bash
+aws s3 ls s3://your-backup-bucket-name/monitoring-backups/
+```
+
+Check storage classes:
+
+```bash
+aws s3api list-objects-v2 --bucket your-backup-bucket-name \
+  --prefix monitoring-backups/ \
+  --query "Contents[].{Key:Key,StorageClass:StorageClass}" \
+  --output table
+```
+
+### Restoring from Backup
+
+To restore from a backup:
+
+```bash
+sudo ./restore-backup.sh
+```
+
+Follow the interactive prompts to select which backup to restore.
+
+## Container-Specific Logs
+
+To view logs from specific containers in Grafana:
+
+1. Import the Container Logs Dashboard:
+
+   ```bash
+   # Place the JSON file in the dashboards directory
+   cp container-logs-dashboard.json dashboards/
+   ```
+
+2. In Grafana, navigate to the Container Logs Dashboard
+3. Use the container dropdown to select specific containers
 
 ## Maintenance
 
