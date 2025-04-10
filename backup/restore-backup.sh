@@ -5,8 +5,8 @@
 
 # Configuration
 BACKUP_DIR="/opt/backup/monitoring"
-DATA_DIR="./data"  # Target directory to restore to
-S3_BUCKET="your-backup-bucket-name"
+DATA_DIR="~/monitoring-tools/data"  # Target directory to restore to
+S3_BUCKET="dev-cw-backup-s3"
 S3_PREFIX="monitoring-backups"
 LOG_FILE="/var/log/monitoring-restore.log"
 

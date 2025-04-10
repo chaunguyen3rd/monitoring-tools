@@ -9,8 +9,8 @@
 
 # Configuration
 BACKUP_DIR="/opt/backup/monitoring"
-DATA_DIR="./data"                       # Location of bind-mounted volumes
-S3_BUCKET="your-backup-bucket-name"     # Replace with your S3 bucket name
+DATA_DIR="~/monitoring-tools/data"                       # Location of bind-mounted volumes
+S3_BUCKET="dev-cw-backup-s3"     # Replace with your S3 bucket name
 S3_PREFIX="monitoring-backups"          # Path prefix in the S3 bucket
 RETENTION_DAYS=30                       # Number of days to keep backups
 LOG_FILE="/var/log/monitoring-backup.log"

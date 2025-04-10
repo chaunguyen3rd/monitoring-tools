@@ -4,7 +4,7 @@
 #
 
 # Configuration
-S3_BUCKET="your-backup-bucket-name"  # Replace with your actual bucket name
+S3_BUCKET="dev-cw-backup-s3"  # Replace with your actual bucket name
 
 # Check if AWS CLI is installed
 if ! command -v aws &> /dev/null; then
