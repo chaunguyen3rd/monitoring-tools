@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 
 # Define the central monitoring server IP/hostname
 # Replace with your main monitoring server address
-MONITORING_SERVER="monitoring01.cw.internal"
+MONITORING_SERVER="monitor01.cw.internal"
 
 # Node name (used to identify this instance in Prometheus)
 NODE_NAME=$(hostname)
@@ -68,6 +68,8 @@ services:
       - /dev/disk/:/dev/disk:ro
     ports:
       - "8080:8080"
+    dns:
+      - 10.0.0.2
     command:
       - '--housekeeping_interval=10s'
       - '--docker_only=true'
@@ -86,6 +88,8 @@ services:
       - /opt/monitoring/configs/promtail-config.yml:/etc/promtail/promtail-config.yml
       - /var/log:/var/log
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    dns:
+      - 10.0.0.2
     command: -config.file=/etc/promtail/promtail-config.yml
 EOL
 
