@@ -15,6 +15,13 @@ volumes:
   grafana_data:
   alertmanager_data:
 
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+    tag: "{{.Name}}"
+
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -34,6 +41,12 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "metrics"
+      service.label: "prometheus"
+      tier.label: "backend"
+    logging: *default-logging
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -54,6 +67,12 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "metrics"
+      service.label: "node-exporter"
+      tier.label: "agent"
+    logging: *default-logging
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -71,6 +90,12 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "metrics"
+      service.label: "cadvisor"
+      tier.label: "agent"
+    logging: *default-logging
 
   loki:
     image: grafana/loki:latest
@@ -84,6 +109,12 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "logs"
+      service.label: "loki"
+      tier.label: "backend"
+    logging: *default-logging
 
   promtail:
     image: grafana/promtail:latest
@@ -93,11 +124,18 @@ services:
       - ./configs/promtail/promtail-config.yml:/etc/promtail/config.yml
       - /var/log:/var/log
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "logs"
+      service.label: "promtail"
+      tier.label: "agent"
+    logging: *default-logging
 
   grafana:
     image: grafana/grafana:latest
@@ -118,6 +156,12 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "visualization"
+      service.label: "grafana"
+      tier.label: "frontend"
+    logging: *default-logging
       
   alertmanager:
     image: prom/alertmanager:latest
@@ -136,3 +180,9 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
+    labels:
+      app.label: "monitoring"
+      component.label: "alerting"
+      service.label: "alertmanager"
+      tier.label: "backend"
+    logging: *default-logging

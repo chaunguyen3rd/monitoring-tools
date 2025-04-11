@@ -33,7 +33,31 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Select containers from the dropdown or write custom queries",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "## Container Log Explorer with Tags\nSelect values from the dropdown filters above to view logs from specific containers based on tags. Use the \"Free Text\" search box to filter logs by content.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.1.8",
+      "title": "How to Use",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -58,10 +82,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 24,
+        "h": 5,
+        "w": 12,
         "x": 0,
-        "y": 0
+        "y": 2
       },
       "id": 6,
       "options": {
@@ -82,13 +106,13 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({job=\"docker\"} | json | unwrap container_name[24h]) by (container_name)",
+          "expr": "count_over_time({service=\"$service\", component=\"$component\", app=\"$app\", tier=\"$tier\"} | unwrap container_name[1h]) by (container_name)",
           "legendFormat": "{{container_name}}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Available Containers (logs in last 24h)",
+      "title": "Containers Matching Selected Tags (logs in last hour)",
       "type": "table"
     },
     {
@@ -96,12 +120,74 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "See logs for the currently selected container",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 2
+      },
+      "id": 10,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.1.8",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "count_over_time({container_name=\"$container\"} | unwrap stream[1h]) by (stream)",
+          "legendFormat": "{{stream}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Log Streams for $container",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Logs for selected container filtered by tags, container, and search text",
       "gridPos": {
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 7
       },
       "id": 2,
       "options": {
@@ -122,12 +208,12 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{container_name=\"$container\"}",
+          "expr": "{service=\"$service\", component=\"$component\", app=\"$app\", tier=\"$tier\", container_name=\"$container\"} |= \"${search:}\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Logs for $container",
+      "title": "Logs by Tags & Container",
       "type": "logs"
     },
     {
@@ -135,12 +221,12 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Manual query panel - write your own Loki queries here",
+      "description": "Write your own custom Loki query for more advanced filtering",
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 21
       },
       "id": 4,
       "options": {
@@ -161,12 +247,12 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{job=\"docker\"} |= \"${search:}\"",
+          "expr": "{container_name=~\"${container_regex:.*}\", service=~\"${service_regex:.*}\", app=~\"${app_regex:.*}\"} |= \"${search_advanced:}\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Custom Query (with text search)",
+      "title": "Advanced Query (custom regex filters)",
       "type": "logs"
     }
   ],
@@ -176,30 +262,30 @@
   "tags": [
     "logs",
     "loki",
-    "docker"
+    "docker",
+    "tags"
   ],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": "prometheus",
-          "value": "prometheus"
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "loki",
           "uid": "loki"
         },
-        "definition": "label_values(container_name)",
-        "description": "Select which container's logs to display",
+        "definition": "label_values(app)",
         "hide": 0,
-        "includeAll": false,
-        "label": "Container",
+        "includeAll": true,
+        "label": "App",
         "multi": false,
-        "name": "container",
+        "name": "app",
         "options": [],
         "query": {
-          "label": "container_name",
+          "label": "app",
           "refId": "LokiVariableQueryEditor-VariableQuery",
           "stream": "",
           "type": 1
@@ -207,7 +293,123 @@
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 1,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values(component)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Component",
+        "multi": false,
+        "name": "component",
+        "options": [],
+        "query": {
+          "label": "component",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values(service)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [],
+        "query": {
+          "label": "service",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values(tier)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Tier",
+        "multi": false,
+        "name": "tier",
+        "options": [],
+        "query": {
+          "label": "tier",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values({service=\"$service\", component=\"$component\", app=\"$app\", tier=\"$tier\"}, container_name)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Container",
+        "multi": false,
+        "name": "container",
+        "options": [],
+        "query": {
+          "label": "container_name",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{service=\"$service\", component=\"$component\", app=\"$app\", tier=\"$tier\"}",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
         "type": "query"
       },
       {
@@ -218,7 +420,92 @@
         },
         "description": "Text to search for in logs",
         "hide": 0,
+        "label": "Free Text Search",
         "name": "search",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "description": "Container regex for advanced filtering",
+        "hide": 0,
+        "label": "Container Regex",
+        "name": "container_regex",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "description": "Service regex for advanced filtering",
+        "hide": 0,
+        "label": "Service Regex",
+        "name": "service_regex",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "description": "App regex for advanced filtering",
+        "hide": 0,
+        "label": "App Regex",
+        "name": "app_regex",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "description": "Advanced search text expression",
+        "hide": 0,
+        "label": "Advanced Search",
+        "name": "search_advanced",
         "options": [
           {
             "selected": true,
@@ -238,8 +525,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Container Logs Explorer",
-  "uid": "container-logs-explorer",
+  "title": "Tagged Container Logs",
+  "uid": "tagged-container-logs",
   "version": 1,
   "weekStart": ""
 }
