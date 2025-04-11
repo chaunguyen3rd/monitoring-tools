@@ -46,30 +46,6 @@
         "uid": "loki"
       },
       "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 18,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
-        "content": "# Advanced Logs Explorer",
-        "mode": "markdown"
-      },
-      "pluginVersion": "9.1.8",
-      "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "gridPos": {
         "h": 3,
         "w": 24,
         "x": 0,

@@ -45,30 +45,6 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 10,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
-        "content": "# Alerts Overview",
-        "mode": "markdown"
-      },
-      "pluginVersion": "9.1.8",
-      "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
