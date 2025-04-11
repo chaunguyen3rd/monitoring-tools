@@ -169,11 +169,11 @@ systemctl start node_exporter
 
 # Start cAdvisor
 echo -e "${BLUE}Starting cAdvisor...${NC}"
-cd /opt/monitoring && docker-compose -f configs/cadvisor-compose.yml up -d
+cd /opt/monitoring && docker compose -f configs/cadvisor-compose.yml up -d
 
 # Start Promtail
 echo -e "${BLUE}Starting Promtail...${NC}"
-cd /opt/monitoring && docker-compose -f configs/promtail-compose.yml up -d
+cd /opt/monitoring && docker compose -f configs/promtail-compose.yml up -d
 
 echo -e "${GREEN}Remote node setup complete!${NC}"
 echo -e "${GREEN}Node Exporter: http://${INSTANCE_IP}:9100${NC}"
