@@ -31,11 +31,12 @@ scrape_configs:
             stream: stream
             attrs: attrs
             tag: attrs.tag
+            source: source
       - labels:
           stream:
           tag:
       - regex:
-          expression: (?P<container_id>(?:[0-9a-f]{64}|[0-9a-f]{12}))
+          expression: "(?P<container_id>(?:[0-9a-f]{64}|[0-9a-f]{12}))"
           source: filename
       - docker:
           container_name_label: container_name
@@ -43,3 +44,8 @@ scrape_configs:
       - timestamp:
           source: time
           format: RFC3339Nano
+      - output:
+          source: log
+      - labeldrop:
+          - attrs
+          - tag
