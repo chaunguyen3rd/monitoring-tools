@@ -30,9 +30,13 @@ sed -i "s|http://MONITORING_SERVER_IP:3100/loki/api/v1/push|http://${MONITORING_
 echo -e "${BLUE}Preparing Docker Compose configuration...${NC}"
 cp remote-docker-compose.yml docker-compose.yml
 
-# Start the monitoring services
+# Get the hostname of this EC2 instance
+EC2_HOSTNAME=$(hostname)
+echo -e "${BLUE}Setting up monitoring for host: ${EC2_HOSTNAME}${NC}"
+
+# Start the monitoring services with the HOSTNAME environment variable
 echo -e "${BLUE}Starting monitoring services...${NC}"
-docker compose up -d
+HOSTNAME=$EC2_HOSTNAME docker compose up -d
 
 # Print information
 echo -e "${GREEN}Remote monitoring services started on $(hostname)${NC}"
