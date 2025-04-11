@@ -28,7 +28,7 @@ monitoring-stack/
 │   └── grafana/                        # Grafana configs
 ├── dashboards/                         # Grafana dashboards
 └── backup/                             # Backup solution
-    ├── docker-volume-backup.sh         # Main backup script
+    ├── docker-volume-backup.sh         # Main backup script for Docker volumes
     ├── backup-cron-setup.sh            # Cron setup script
     ├── restore-backup.sh               # Backup restoration script
     ├── setup-s3-lifecycle.sh           # S3 lifecycle configuration
@@ -142,14 +142,24 @@ After making changes, restart AlertManager:
 docker-compose restart alertmanager
 ```
 
-## Backup Solution
+## Backup Solution for Docker Volumes
 
-The monitoring stack includes a comprehensive backup solution that performs:
+The monitoring stack now includes a comprehensive backup solution for Docker volumes that performs:
 
 - Full backups every Sunday at 22:00 UTC
 - Incremental backups Monday-Saturday at 22:00 UTC
 - Uploads to Amazon S3 with intelligent storage tiering
 - Automated retention management
+
+### How Docker Volume Backup Works
+
+This solution directly backs up the native Docker volumes rather than bind-mounted directories:
+
+1. The system identifies the Docker volumes created by the stack
+2. Creates consistent backups using temporary containers
+3. Efficiently tracks and backs up only changed files for incremental backups
+4. Preserves all metadata and permissions
+5. Provides a simple recovery interface
 
 ### Storage Tiering Strategy
 
@@ -207,7 +217,7 @@ Backups automatically move through these storage tiers:
 
 ### About the S3 Lifecycle Configuration
 
-The `setup-s3-lifecycle.sh` script now checks for an existing lifecycle policy:
+The `setup-s3-lifecycle.sh` script checks for an existing lifecycle policy:
 
 - Detects if the MonitoringBackupsLifecycle policy is already enabled
 - Shows current settings if the policy exists
@@ -278,7 +288,13 @@ To restore from a backup:
 sudo ./restore-backup.sh
 ```
 
-Follow the interactive prompts to select which backup to restore.
+Follow the interactive prompts to select which backup to restore. The script will:
+
+1. List available backups in your S3 bucket
+2. Allow you to choose a full backup or full+incremental sequence
+3. Download the selected backups
+4. Safely restore the data to your Docker volumes
+5. Restart the monitoring stack with the restored data
 
 ## Container-Specific Logs
 
@@ -334,7 +350,7 @@ docker-compose logs grafana
 Common issues:
 
 - Port conflicts: Make sure ports 3000, 9090, 9093, 9100, 8080, and 3100 are available
-- Permissions issues: Make sure Docker has permission to mount volumes
+- Permissions issues: Make sure Docker has permission to manage volumes
 - Resource limitations: Ensure your system has enough memory and CPU
 
 ## License

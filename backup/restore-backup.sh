@@ -1,14 +1,20 @@
 #!/bin/bash
 #
-# Restore script for monitoring stack backups
+# Restore script for Docker volumes monitoring stack backups
 #
 
 # Configuration
 BACKUP_DIR="/opt/backup/monitoring"
-DATA_DIR="~/monitoring-tools/data"  # Target directory to restore to
+DOCKER_VOLUME_PREFIX="monitoring-tools"  # Docker Compose project name prefix for volumes
 S3_BUCKET="dev-cw-backup-s3"
 S3_PREFIX="monitoring-backups"
 LOG_FILE="/var/log/monitoring-restore.log"
+VOLUMES=(
+    "prometheus_data"
+    "grafana_data"
+    "loki_data"
+    "alertmanager_data"
+)
 
 # Function for logging
 log() {
@@ -17,6 +23,7 @@ log() {
 
 # Check requirements
 command -v aws >/dev/null 2>&1 || { log "AWS CLI is required but not installed. Aborting."; exit 1; }
+command -v docker >/dev/null 2>&1 || { log "Docker is required but not installed. Aborting."; exit 1; }
 command -v tar >/dev/null 2>&1 || { log "tar is required but not installed. Aborting."; exit 1; }
 
 # List available backups from S3
@@ -46,7 +53,7 @@ download_backup() {
     fi
 }
 
-# Restore a full backup
+# Restore a full backup to Docker volumes
 restore_full_backup() {
     local BACKUP_FILE=$1
     local BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILE}"
@@ -56,33 +63,71 @@ restore_full_backup() {
         return 1
     fi
     
-    # Stop the Docker containers
-    log "Stopping Docker containers..."
-    cd $(dirname $DATA_DIR) && docker-compose down
+    # Create temporary directory for extraction
+    local TMP_EXTRACT_DIR="${BACKUP_DIR}/tmp_extract_$(date +%Y%m%d%H%M%S)"
+    mkdir -p "$TMP_EXTRACT_DIR"
     
-    # Backup existing data (just in case)
-    if [ -d "$DATA_DIR" ]; then
-        log "Backing up existing data..."
-        mv "$DATA_DIR" "${DATA_DIR}_old_$(date +%Y%m%d%H%M%S)"
-        mkdir -p "$DATA_DIR"
-    fi
-    
-    # Extract the backup
+    # Extract the backup archive
     log "Extracting $BACKUP_FILE..."
-    tar -xzf "$BACKUP_PATH" -C $(dirname $DATA_DIR) --strip-components=1
+    tar -xzf "$BACKUP_PATH" -C "$TMP_EXTRACT_DIR"
     
-    if [ $? -eq 0 ]; then
-        log "Restore completed successfully"
-        
-        # Restart the Docker containers
-        log "Starting Docker containers..."
-        cd $(dirname $DATA_DIR) && docker-compose up -d
-        
-        return 0
-    else
-        log "Restore failed"
+    if [ $? -ne 0 ]; then
+        log "Failed to extract backup"
+        rm -rf "$TMP_EXTRACT_DIR"
         return 1
     fi
+    
+    # Stop the Docker containers
+    log "Stopping Docker containers..."
+    docker-compose down
+    
+    # Restore each volume
+    for VOLUME in "${VOLUMES[@]}"; do
+        log "Restoring volume: $VOLUME"
+        
+        # Check if volume directory exists in the backup
+        if [ ! -d "${TMP_EXTRACT_DIR}/${VOLUME}" ]; then
+            log "Volume $VOLUME not found in backup, skipping"
+            continue
+        fi
+        
+        # Get or create the actual volume
+        ACTUAL_VOLUME=$(docker volume ls --format '{{.Name}}' | grep -E "${DOCKER_VOLUME_PREFIX}_${VOLUME}$|^${VOLUME}$" | head -n 1)
+        
+        if [ -z "$ACTUAL_VOLUME" ]; then
+            log "Volume $VOLUME not found, creating it"
+            # Try to create with project prefix first, then without if that fails
+            docker volume create "${DOCKER_VOLUME_PREFIX}_${VOLUME}" || docker volume create "${VOLUME}"
+            ACTUAL_VOLUME=$(docker volume ls --format '{{.Name}}' | grep -E "${DOCKER_VOLUME_PREFIX}_${VOLUME}$|^${VOLUME}$" | head -n 1)
+        fi
+        
+        if [ -z "$ACTUAL_VOLUME" ]; then
+            log "Failed to create volume $VOLUME, skipping"
+            continue
+        fi
+        
+        # Clear existing data in the volume
+        log "Clearing existing data in volume $ACTUAL_VOLUME"
+        docker run --rm -v "${ACTUAL_VOLUME}:/volume" alpine:latest sh -c "rm -rf /volume/*"
+        
+        # Restore the data
+        log "Restoring data to volume $ACTUAL_VOLUME"
+        docker run --rm \
+            -v "${ACTUAL_VOLUME}:/volume" \
+            -v "${TMP_EXTRACT_DIR}/${VOLUME}:/backup" \
+            alpine:latest \
+            sh -c "cd /backup && tar -cf - . | (cd /volume && tar -xf -)"
+    done
+    
+    # Clean up
+    rm -rf "$TMP_EXTRACT_DIR"
+    
+    # Restart the Docker containers
+    log "Starting Docker containers..."
+    docker-compose up -d
+    
+    log "Restore completed successfully"
+    return 0
 }
 
 # Restore an incremental backup - requires the full backup and all incrementals in sequence
@@ -99,7 +144,7 @@ restore_incremental_sequence() {
         return 1
     fi
     
-    # Then apply each incremental in sequence
+    # Now apply each incremental backup in sequence
     for INCREMENTAL in "${INCREMENTAL_BACKUPS[@]}"; do
         log "Applying incremental backup: $INCREMENTAL"
         local BACKUP_PATH="${BACKUP_DIR}/${INCREMENTAL}"
@@ -109,24 +154,63 @@ restore_incremental_sequence() {
             continue
         fi
         
+        # Create temporary directory for extraction
+        local TMP_EXTRACT_DIR="${BACKUP_DIR}/tmp_extract_$(date +%Y%m%d%H%M%S)"
+        mkdir -p "$TMP_EXTRACT_DIR"
+        
         # Extract the incremental backup
-        tar -xzf "$BACKUP_PATH" -C $(dirname $DATA_DIR) --strip-components=1
+        tar -xzf "$BACKUP_PATH" -C "$TMP_EXTRACT_DIR"
         
         if [ $? -ne 0 ]; then
-            log "Failed to apply incremental backup: $INCREMENTAL"
-        fi
+            log "Failed to extract incremental backup: $INCREMENTAL"
+            rm -rf "$TMP_EXTRACT_DIR"
+            continue
+        }
+        
+        # Stop containers before applying incremental backup
+        log "Stopping Docker containers for incremental restore..."
+        docker-compose down
+        
+        # Apply incremental changes to each volume
+        for VOLUME in "${VOLUMES[@]}"; do
+            # Skip if this volume doesn't have changes in this incremental
+            if [ ! -d "${TMP_EXTRACT_DIR}/${VOLUME}" ]; then
+                continue
+            }
+            
+            log "Applying incremental changes to volume: $VOLUME"
+            
+            # Get the actual volume name
+            ACTUAL_VOLUME=$(docker volume ls --format '{{.Name}}' | grep -E "${DOCKER_VOLUME_PREFIX}_${VOLUME}$|^${VOLUME}$" | head -n 1)
+            
+            if [ -z "$ACTUAL_VOLUME" ]; then
+                log "Volume $VOLUME not found, skipping"
+                continue
+            fi
+            
+            # Apply incremental changes
+            docker run --rm \
+                -v "${ACTUAL_VOLUME}:/volume" \
+                -v "${TMP_EXTRACT_DIR}/${VOLUME}:/backup" \
+                alpine:latest \
+                sh -c "cd /backup && tar -cf - . | (cd /volume && tar -xf -)"
+        done
+        
+        # Clean up
+        rm -rf "$TMP_EXTRACT_DIR"
+        
+        # Restart containers after applying incremental
+        log "Restarting Docker containers..."
+        docker-compose up -d
     done
     
-    # Restart the Docker containers
-    log "Starting Docker containers..."
-    cd $(dirname $DATA_DIR) && docker-compose up -d
-    
+    log "Incremental restore sequence completed successfully"
     return 0
 }
 
 # Interactive mode
 interactive_restore() {
-    echo "=== Monitoring Stack Backup Restore ==="
+    echo "=== Monitoring Stack Docker Volume Restore ==="
     echo ""
     
     # List available backups
@@ -189,6 +273,8 @@ interactive_restore() {
             aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX}/" | grep "incremental" | grep -A 100 "$FULL_DATE" | awk '{print NR ") " $4}'
             
             read -p "Enter numbers for incrementals (comma-separated, or 'all'): " inc_choice
+            
+            INCREMENTALS=()
             
             if [ "$inc_choice" == "all" ]; then
                 INCREMENTALS=($(aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX}/" | grep "incremental" | grep -A 100 "$FULL_DATE" | awk '{print $4}'))

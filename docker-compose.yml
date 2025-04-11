@@ -9,6 +9,12 @@ networks:
     driver_opts:
       com.docker.network.bridge.name: cw-net
 
+volumes:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  alertmanager_data:
+
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -17,7 +23,7 @@ services:
     volumes:
       - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./configs/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml
-      - ./data/prometheus:/prometheus
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -71,7 +77,7 @@ services:
     container_name: loki
     restart: unless-stopped
     volumes:
-      - ./data/loki:/loki
+      - loki_data:/loki
     ports:
       - "3100:3100"
     networks:
@@ -98,7 +104,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     volumes:
-      - ./data/grafana:/var/lib/grafana
+      - grafana_data:/var/lib/grafana
       - ./configs/grafana/datasources:/etc/grafana/provisioning/datasources
       - ./configs/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - ./dashboards:/var/lib/grafana/dashboards
@@ -120,7 +126,7 @@ services:
     volumes:
       - ./configs/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - ./configs/alertmanager/templates:/etc/alertmanager/templates
-      - ./data/alertmanager:/alertmanager
+      - alertmanager_data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
