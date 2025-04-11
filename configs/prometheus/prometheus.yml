@@ -38,7 +38,7 @@ scrape_configs:
           instance_group: "monitoring"
 
   # Remote EC2 Instance - Node Exporter
-  - job_name: "remote-node-exporter"
+  - job_name: "dev01-node-exporter"
     static_configs:
       - targets: ["dev01.cw.internal:9100"]
         labels:
@@ -46,7 +46,7 @@ scrape_configs:
           instance_group: "application"
 
   # Remote EC2 Instance - cAdvisor
-  - job_name: "remote-cadvisor"
+  - job_name: "dev01-cadvisor"
     static_configs:
       - targets: ["dev01.cw.internal:8080"]
         labels:
