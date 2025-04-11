@@ -13,14 +13,57 @@ rule_files:
   - "alert-rules.yml"
 
 scrape_configs:
+  # Main Server - Prometheus itself
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
+        labels:
+          host: "monitor01.cw.internal"
+          instance_group: "monitoring"
 
-  - job_name: "node-exporter"
+  # Main Server - Node Exporter
+  - job_name: "main-node-exporter"
     static_configs:
       - targets: ["node-exporter:9100"]
+        labels:
+          host: "monitor01.cw.internal"
+          instance_group: "monitoring"
 
-  - job_name: "cadvisor"
+  # Main Server - cAdvisor
+  - job_name: "main-cadvisor"
     static_configs:
       - targets: ["cadvisor:8080"]
+        labels:
+          host: "monitor01.cw.internal"
+          instance_group: "monitoring"
+
+  # Remote EC2 Instance - Node Exporter
+  - job_name: "remote-node-exporter"
+    static_configs:
+      - targets: ["dev01.cw.internal:9100"]
+        labels:
+          host: "dev01.cw.internal"
+          instance_group: "application"
+
+  # Remote EC2 Instance - cAdvisor
+  - job_name: "remote-cadvisor"
+    static_configs:
+      - targets: ["dev01.cw.internal:8080"]
+        labels:
+          host: "dev01.cw.internal"
+          instance_group: "application"
+
+  # OPTIONAL: Add more remote instances as needed
+  # - job_name: "remote-node-exporter-2"
+  #   static_configs:
+  #     - targets: ["REMOTE_EC2_IP_2:9100"]
+  #       labels:
+  #         host: "remote-server-2"
+  #         instance_group: "database"
+
+  # - job_name: "remote-cadvisor-2"
+  #   static_configs:
+  #     - targets: ["REMOTE_EC2_IP_2:8080"]
+  #       labels:
+  #         host: "remote-server-2"
+  #         instance_group: "database"

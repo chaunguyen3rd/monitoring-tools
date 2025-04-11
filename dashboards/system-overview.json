@@ -45,6 +45,30 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 20,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Multi-Host System Overview - $host",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.1.8",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -101,7 +125,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\", host=~\"$host\"}[5m])) * 100)",
           "refId": "A"
         }
       ],
@@ -169,7 +193,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (1 - ((node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes) / node_memory_MemTotal_bytes))",
+          "expr": "100 * (1 - ((node_memory_MemFree_bytes{host=~\"$host\"} + node_memory_Cached_bytes{host=~\"$host\"} + node_memory_Buffers_bytes{host=~\"$host\"}) / node_memory_MemTotal_bytes{host=~\"$host\"}))",
           "refId": "A"
         }
       ],
@@ -237,7 +261,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\"})",
+          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\",host=~\"$host\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\",host=~\"$host\"})",
           "refId": "A"
         }
       ],
@@ -304,7 +328,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "node_load1",
+          "expr": "node_load1{host=~\"$host\"}",
           "refId": "A"
         }
       ],
@@ -370,7 +394,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(count by(name) (container_cpu_usage_seconds_total{image!=\"\"}))",
+          "expr": "count(count by(name) (container_cpu_usage_seconds_total{host=~\"$host\"}))",
           "refId": "A"
         }
       ],
@@ -464,7 +488,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(ALERTS{alertstate=\"firing\"})",
+          "expr": "sum(ALERTS{alertstate=\"firing\", host=~\"$host\"})",
           "instant": true,
           "interval": "",
           "legendFormat": "",
@@ -567,7 +591,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 - (avg by (mode) (irate(node_cpu_seconds_total{mode!=\"idle\"}[5m])) * 100)",
+          "expr": "100 - (avg by (mode) (irate(node_cpu_seconds_total{mode!=\"idle\", host=~\"$host\"}[5m])) * 100)",
           "legendFormat": "{{mode}}",
           "range": true,
           "refId": "A"
@@ -669,7 +693,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes",
+          "expr": "node_memory_MemTotal_bytes{host=~\"$host\"} - node_memory_MemFree_bytes{host=~\"$host\"} - node_memory_Buffers_bytes{host=~\"$host\"} - node_memory_Cached_bytes{host=~\"$host\"}",
           "legendFormat": "Used",
           "range": true,
           "refId": "A"
@@ -680,7 +704,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "node_memory_Cached_bytes + node_memory_Buffers_bytes",
+          "expr": "node_memory_Cached_bytes{host=~\"$host\"} + node_memory_Buffers_bytes{host=~\"$host\"}",
           "hide": false,
           "legendFormat": "Cached/Buffers",
           "range": true,
@@ -692,7 +716,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "node_memory_MemFree_bytes",
+          "expr": "node_memory_MemFree_bytes{host=~\"$host\"}",
           "hide": false,
           "legendFormat": "Free",
           "range": true,
@@ -795,7 +819,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\"})",
+          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"rootfs\",host=~\"$host\"} * 100) / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"rootfs\",host=~\"$host\"})",
           "hide": false,
           "legendFormat": "/ (root)",
           "range": true,
@@ -807,7 +831,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint!=\"/\",fstype!=\"rootfs\"} * 100) / node_filesystem_size_bytes{mountpoint!=\"/\",fstype!=\"rootfs\"})",
+          "expr": "100 - ((node_filesystem_avail_bytes{mountpoint!=\"/\",fstype!=\"rootfs\",host=~\"$host\"} * 100) / node_filesystem_size_bytes{mountpoint!=\"/\",fstype!=\"rootfs\",host=~\"$host\"})",
           "hide": false,
           "legendFormat": "{{mountpoint}}",
           "range": true,
@@ -909,7 +933,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "node_load1",
+          "expr": "node_load1{host=~\"$host\"}",
           "legendFormat": "1m",
           "range": true,
           "refId": "A"
@@ -920,7 +944,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "node_load5",
+          "expr": "node_load5{host=~\"$host\"}",
           "hide": false,
           "legendFormat": "5m",
           "range": true,
@@ -932,7 +956,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "node_load15",
+          "expr": "node_load15{host=~\"$host\"}",
           "hide": false,
           "legendFormat": "15m",
           "range": true,
@@ -941,6 +965,44 @@
       ],
       "title": "System Load Average",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "System logs from the selected host",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 24,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{host=~\"$host\", job=\"varlogs\"} |= \"$search\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "System Logs - $host",
+      "type": "logs"
     }
   ],
   "refresh": "10s",
@@ -948,10 +1010,57 @@
   "style": "dark",
   "tags": [
     "system",
-    "node-exporter"
+    "node-exporter",
+    "multi-host"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(node_uname_info, host)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": false,
+        "name": "host",
+        "options": [],
+        "query": {
+          "query": "label_values(node_uname_info, host)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "name": "search",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -959,8 +1068,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "System Overview",
-  "uid": "system-overview",
+  "title": "Multi-Host System Overview",
+  "uid": "multi-host-system-overview",
   "version": 1,
   "weekStart": ""
 }
