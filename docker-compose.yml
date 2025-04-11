@@ -119,12 +119,6 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
-    labels:
-      app.label: "monitoring"
-      component.label: "visualization"
-      service.label: "grafana"
-      tier.label: "frontend"
-    logging: *default-logging
       
   alertmanager:
     image: prom/alertmanager:latest
@@ -143,4 +137,3 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
-      
