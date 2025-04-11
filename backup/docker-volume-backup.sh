@@ -213,7 +213,17 @@ upload_to_s3() {
         return 1
     fi
     
-    log "Uploading $BACKUP_FILE to S3"
+    log "Uploading $BACKUP_FILE to S3 bucket ${S3_BUCKET}"
+    
+    # Check if the bucket exists and we have access
+    if ! aws s3api head-bucket --bucket ${S3_BUCKET} 2>/dev/null; then
+        log "Error: Cannot access bucket ${S3_BUCKET}. Please check if it exists and if you have proper permissions."
+        return 1
+    fi
+    
+    # The prefix (folder) will be automatically created when we upload the file
+    # No need to create it separately
+    log "Uploading to prefix (folder): ${S3_PREFIX}/"
     
     # Upload with standard storage class
     aws s3 cp $BACKUP_PATH "s3://${S3_BUCKET}/${S3_PREFIX}/${BACKUP_FILE}" --storage-class STANDARD
@@ -221,11 +231,13 @@ upload_to_s3() {
     
     if [ $UPLOAD_STATUS -eq 0 ]; then
         log "Upload completed successfully"
+        log "Backup file available at: s3://${S3_BUCKET}/${S3_PREFIX}/${BACKUP_FILE}"
         # Optionally remove local file after successful upload
         # rm $BACKUP_PATH
         return 0
     else
         log "Upload failed with status $UPLOAD_STATUS"
+        log "Please check AWS credentials and permissions"
         return 1
     fi
 }
@@ -243,17 +255,50 @@ cleanup_old_backups() {
     log "   - After 60 days: Deleted automatically"
 }
 
+# Parse command line arguments
+parse_args() {
+    # Default to using day of week to determine backup type
+    if [ -z "$1" ]; then
+        # Sunday (0 in cron, 7 in date command) = Full backup, other days = Incremental
+        if [ "$DAY_OF_WEEK" -eq 7 ]; then
+            echo "full"
+        else
+            echo "incremental"
+        fi
+        return
+    fi
+    
+    # Otherwise use the provided argument
+    case "$1" in
+        full|FULL|f)
+            echo "full"
+            ;;
+        incremental|INCREMENTAL|inc|i)
+            echo "incremental"
+            ;;
+        *)
+            log "Unknown backup type: $1. Using day-based decision."
+            if [ "$DAY_OF_WEEK" -eq 7 ]; then
+                echo "full"
+            else
+                echo "incremental"
+            fi
+            ;;
+    esac
+}
+
 # Main execution
 main() {
     log "Starting backup process for Docker volumes"
     check_requirements
     
-    # Sunday (7) = Full backup, other days = Incremental
-    if [ "$DAY_OF_WEEK" -eq 7 ]; then
-        BACKUP_TYPE="full"
+    # Determine backup type from command line argument or day of week
+    BACKUP_TYPE=$(parse_args "$1")
+    log "Performing ${BACKUP_TYPE} backup"
+    
+    if [ "$BACKUP_TYPE" = "full" ]; then
         full_backup
     else
-        BACKUP_TYPE="incremental"
         incremental_backup
     fi
     
@@ -277,5 +322,5 @@ main() {
     log "Backup process completed"
 }
 
-# Execute the main function
-main
+# Execute the main function with all arguments passed to the script
+main "$@"

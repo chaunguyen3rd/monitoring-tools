@@ -28,8 +28,33 @@ command -v tar >/dev/null 2>&1 || { log "tar is required but not installed. Abor
 
 # List available backups from S3
 list_backups() {
-    log "Listing available backups in S3..."
-    aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX}/" | grep "tar.gz"
+    log "Listing available backups in S3 bucket ${S3_BUCKET}..."
+    
+    # Check if the bucket exists and we have access
+    if ! aws s3api head-bucket --bucket ${S3_BUCKET} 2>/dev/null; then
+        log "Error: Cannot access bucket ${S3_BUCKET}. Please check if it exists and if you have proper permissions."
+        return 1
+    fi
+    
+    # Check if the prefix exists (it's okay if it doesn't)
+    local PREFIX_EXISTS=$(aws s3api list-objects-v2 --bucket ${S3_BUCKET} --prefix "${S3_PREFIX}/" --max-items 1 --query 'Contents[0].Key' --output text 2>/dev/null)
+    
+    if [[ "$PREFIX_EXISTS" == "None" || -z "$PREFIX_EXISTS" ]]; then
+        log "Warning: No backups found in s3://${S3_BUCKET}/${S3_PREFIX}/"
+        log "The specified prefix (folder) may not exist yet or contains no backups."
+        return 1
+    fi
+    
+    # List the actual backups
+    local BACKUPS=$(aws s3 ls "s3://${S3_BUCKET}/${S3_PREFIX}/" | grep "tar.gz")
+    
+    if [[ -z "$BACKUPS" ]]; then
+        log "No backup files found in s3://${S3_BUCKET}/${S3_PREFIX}/"
+        return 1
+    fi
+    
+    echo "$BACKUPS"
+    return 0
 }
 
 # Download backup from S3

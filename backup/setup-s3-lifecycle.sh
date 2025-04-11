@@ -29,8 +29,15 @@ fi
 # Check if bucket exists
 if ! aws s3api head-bucket --bucket $S3_BUCKET 2>/dev/null; then
     echo "Error: Bucket $S3_BUCKET does not exist or you don't have access to it."
+    echo "Please make sure:"
+    echo "  1. The bucket is created in your AWS account"
+    echo "  2. Your AWS credentials have proper permissions"
+    echo "  3. The bucket name is spelled correctly"
     exit 1
 fi
+
+echo "Successfully connected to S3 bucket: $S3_BUCKET"
+echo "Note: The prefix (folder) 'monitoring-backups/' will be automatically created when the first backup runs."
 
 # Check if lifecycle policy already exists
 if ! $FORCE_UPDATE; then

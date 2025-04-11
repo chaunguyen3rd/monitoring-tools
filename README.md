@@ -157,9 +157,20 @@ This solution directly backs up the native Docker volumes rather than bind-mount
 
 1. The system identifies the Docker volumes created by the stack
 2. Creates consistent backups using temporary containers
-3. Efficiently tracks and backs up only changed files for incremental backups
-4. Preserves all metadata and permissions
-5. Provides a simple recovery interface
+3. **Performs full backups every Sunday at 22:00 UTC**
+4. **Performs incremental backups Monday-Saturday at 22:00 UTC** (only backing up changed files)
+5. Preserves all metadata and permissions
+6. Provides a simple recovery interface
+
+You can also manually trigger specific backup types:
+
+```bash
+# Run a full backup
+sudo /opt/backup/scripts/docker-volume-backup.sh full
+
+# Run an incremental backup
+sudo /opt/backup/scripts/docker-volume-backup.sh incremental
+```
 
 ### Storage Tiering Strategy
 
@@ -173,7 +184,17 @@ Backups automatically move through these storage tiers:
 
 ### Setting Up the Backup System
 
-1. Install the AWS CLI:
+1. Create an S3 bucket in your AWS account (if not already done):
+   - Go to the AWS Management Console
+   - Navigate to S3
+   - Click "Create bucket"
+   - Name it (e.g., "dev-cw-backup-s3")
+   - Configure other settings as needed
+   - Click "Create bucket"
+
+   Note: You only need to create the bucket itself. The `monitoring-backups/` prefix (folder) will be automatically created when the first backup runs.
+
+2. Install the AWS CLI:
 
    ```bash
    sudo apt-get update && sudo apt-get install -y awscli
@@ -181,13 +202,13 @@ Backups automatically move through these storage tiers:
    # sudo yum install -y awscli
    ```
 
-2. Configure AWS credentials:
+3. Configure AWS credentials:
 
    ```bash
    aws configure
    ```
 
-3. Use your existing S3 bucket:
+   Enter your AWS Access Key, Secret Key, Default region (e.g., us-east-1), and output format (json)
 
 4. Set up the backup system:
 
@@ -195,24 +216,35 @@ Backups automatically move through these storage tiers:
    cd backup
    chmod +x *.sh
    
-   # Edit scripts to set your existing S3 bucket name and prefix
+   # Edit scripts to set your S3 bucket name
    nano docker-volume-backup.sh
-   # Change the S3_BUCKET variable to your existing bucket name
-   # Consider changing S3_PREFIX to "monitoring-backups" or another unique prefix
-   # to avoid conflicts with other content in the bucket
+   # Change the S3_BUCKET variable to your bucket name (e.g., "dev-cw-backup-s3")
+   # The default S3_PREFIX is "monitoring-backups" which will be created automatically
    
    nano setup-s3-lifecycle.sh
-   # Update the S3_BUCKET variable to match your existing bucket
+   # Update the S3_BUCKET variable to match your bucket name
    
-   # Install the cron job
+   # Install the cron job and verify S3 connectivity
    sudo ./backup-cron-setup.sh
    
-   # Check or update S3 lifecycle rules for the specific prefix
-   # The script will detect if the policy is already enabled
+   # Set up S3 lifecycle rules for the bucket
    sudo ./setup-s3-lifecycle.sh
    
-   # If you need to force an update to the policy, use:
+   # If you need to update existing lifecycle rules, use:
    # sudo ./setup-s3-lifecycle.sh --force
+   ```
+
+5. Verify the setup:
+
+   ```bash
+   # Test if the backup script works properly
+   sudo /opt/backup/scripts/docker-volume-backup.sh
+   
+   # Check the logs
+   tail -f /var/log/monitoring-backup.log
+   
+   # Verify the backup was uploaded to S3
+   aws s3 ls s3://your-bucket-name/monitoring-backups/
    ```
 
 ### About the S3 Lifecycle Configuration
