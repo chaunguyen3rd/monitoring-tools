@@ -97,15 +97,10 @@ else
   exit 1
 fi
 
-# Prepare setup script for remote hosts
-echo -e "${BLUE}Preparing remote node setup script...${NC}"
-cp setup-remote-node.sh remote-setup.sh
-chmod +x remote-setup.sh
-
 echo -e "${GREEN}Main monitoring node installation complete!${NC}"
 echo -e "${BLUE}Next steps:${NC}"
-echo -e "1. Copy remote-setup.sh to your remote hosts (${REMOTE_HOST1} and ${REMOTE_HOST2})"
-echo -e "2. Run the script on each remote host: sudo ./remote-setup.sh"
+echo -e "1. Use the 'remote' folder to set up monitoring on your remote hosts"
+echo -e "2. Copy the remote folder to each host and run the install.sh script there"
 echo -e "3. When prompted, enter this server's hostname: ${HOST_FQDN}"
 echo -e ""
 echo -e "Once completed, all your servers will be monitored and viewable in Grafana."
