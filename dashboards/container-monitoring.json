@@ -32,14 +32,229 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": false,
-      "title": "Home",
+      "title": "Cluster Overview",
       "tooltip": "",
       "type": "link",
-      "url": "/d/monitoring-home"
+      "url": "/d/server-cluster-overview"
     }
   ],
   "liveNow": false,
   "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Container Monitoring - $host",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.1.8",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "id": 8,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.1.8",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "avg(sum by(name) (rate(container_cpu_usage_seconds_total{host=~\"$host\", name=~\"$container\"}[1m])) * 100)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Average CPU Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "id": 9,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.1.8",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(container_memory_usage_bytes{host=~\"$host\", name=~\"$container\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total Memory Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.1.8",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(container_cpu_usage_seconds_total{host=~\"$host\", name=~\"$container\"})",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Container Count",
+      "type": "stat"
+    },
     {
       "datasource": {
         "type": "prometheus",
@@ -57,7 +272,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -89,6 +304,10 @@
                 "value": null
               },
               {
+                "color": "#EAB839",
+                "value": 50
+              },
+              {
                 "color": "red",
                 "value": 80
               }
@@ -102,16 +321,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 1
+        "y": 5
       },
       "id": 2,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "max", "lastNotNull"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -129,7 +344,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by(name) (rate(container_cpu_usage_seconds_total{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}[1m])) * 100",
+          "expr": "sum by(name) (rate(container_cpu_usage_seconds_total{host=~\"$host\", name=~\"$container\"}[1m])) * 100",
           "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
@@ -155,7 +370,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -187,8 +402,12 @@
                 "value": null
               },
               {
+                "color": "#EAB839",
+                "value": 70
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -200,16 +419,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 1
+        "y": 5
       },
-      "id": 4,
+      "id": 3,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "max", "lastNotNull"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -227,7 +442,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "container_memory_usage_bytes{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}",
+          "expr": "container_memory_usage_bytes{host=~\"$host\", name=~\"$container\"}",
           "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
@@ -270,7 +485,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Value #CPU"
+              "options": "CPU Usage"
             },
             "properties": [
               {
@@ -314,7 +529,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Value #Memory"
+              "options": "Memory Usage"
             },
             "properties": [
               {
@@ -392,12 +607,40 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Name"
+              "options": "Container Name"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 200
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Uptime"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.width",
+                "value": 120
               }
             ]
           }
@@ -407,20 +650,24 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 13
       },
-      "id": 14,
+      "id": 4,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "CPU Usage"
+          }
+        ]
       },
       "pluginVersion": "9.1.8",
       "targets": [
@@ -431,9 +678,10 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(name) (rate(container_cpu_usage_seconds_total{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}[1m])) * 100",
+          "expr": "sum by(name, host) (rate(container_cpu_usage_seconds_total{host=~\"$host\", name=~\"$container\"}[1m])) * 100",
           "format": "table",
           "instant": true,
+          "interval": "",
           "legendFormat": "__auto",
           "range": false,
           "refId": "CPU"
@@ -445,13 +693,30 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "container_memory_usage_bytes{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}",
+          "expr": "container_memory_usage_bytes{host=~\"$host\", name=~\"$container\"}",
           "format": "table",
           "hide": false,
           "instant": true,
+          "interval": "",
           "legendFormat": "__auto",
           "range": false,
           "refId": "Memory"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "time() - container_start_time_seconds{host=~\"$host\", name=~\"$container\"}",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "Uptime"
         }
       ],
       "title": "Container Resource Usage",
@@ -469,45 +734,38 @@
             "excludeByName": {
               "Time 1": true,
               "Time 2": true,
+              "Time 3": true,
               "Value #__name__ 1": true,
               "Value #__name__ 2": true,
-              "Value #container 1": true,
-              "Value #container 2": true,
-              "Value #container_label_com_docker_compose_service 1": true,
-              "Value #container_label_com_docker_compose_service 2": true,
+              "Value #__name__ 3": true,
               "Value #id 1": true,
               "Value #id 2": true,
+              "Value #id 3": true,
               "Value #image 1": true,
               "Value #image 2": true,
+              "Value #image 3": true,
               "Value #instance 1": true,
               "Value #instance 2": true,
+              "Value #instance 3": true,
               "Value #job 1": true,
-              "Value #job 2": true
+              "Value #job 2": true,
+              "Value #job 3": true
             },
             "indexByName": {
-              "Time 1": 2,
-              "Time 2": 3,
-              "Value #CPU": 5,
-              "Value #Memory": 6,
-              "Value #__name__ 1": 7,
-              "Value #__name__ 2": 8,
-              "Value #container 1": 9,
-              "Value #container 2": 10,
-              "Value #container_label_com_docker_compose_service 1": 11,
-              "Value #container_label_com_docker_compose_service 2": 12,
-              "Value #id 1": 13,
-              "Value #id 2": 14,
-              "Value #image 1": 15,
-              "Value #image 2": 16,
-              "Value #instance 1": 17,
-              "Value #instance 2": 18,
-              "Value #job 1": 19,
-              "Value #job 2": 20,
-              "name": 4
+              "Time 1": 0,
+              "Time 2": 1,
+              "Time 3": 2,
+              "Value #CPU": 7,
+              "Value #Memory": 8,
+              "Value #Uptime": 9,
+              "host": 6,
+              "name": 5
             },
             "renameByName": {
               "Value #CPU": "CPU Usage",
               "Value #Memory": "Memory Usage",
+              "Value #Uptime": "Uptime",
+              "host": "Host",
               "name": "Container Name"
             }
           }
@@ -524,9 +782,7 @@
             },
             "mode": "binary",
             "reduce": {
-              "include": [
-                "CPU Usage"
-              ],
+              "include": ["CPU Usage"],
               "reducer": "sum"
             },
             "replaceFields": false
@@ -548,12 +804,7 @@
           "id": "filterFieldsByName",
           "options": {
             "include": {
-              "names": [
-                "Container Name",
-                "CPU Usage",
-                "Memory Usage",
-                "Status"
-              ]
+              "names": ["Container Name", "Host", "CPU Usage", "Memory Usage", "Status", "Uptime"]
             }
           }
         }
@@ -577,7 +828,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -622,16 +873,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 23
       },
-      "id": 6,
+      "id": 5,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "max", "lastNotNull"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -649,7 +896,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(container_network_receive_bytes_total{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}[1m])",
+          "expr": "rate(container_network_receive_bytes_total{host=~\"$host\", name=~\"$container\"}[1m])",
           "legendFormat": "{{name}} RX",
           "range": true,
           "refId": "A"
@@ -675,7 +922,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -720,16 +967,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 23
       },
-      "id": 8,
+      "id": 6,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "max", "lastNotNull"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -747,7 +990,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(container_network_transmit_bytes_total{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}[1m])",
+          "expr": "rate(container_network_transmit_bytes_total{host=~\"$host\", name=~\"$container\"}[1m])",
           "legendFormat": "{{name}} TX",
           "range": true,
           "refId": "A"
@@ -773,7 +1016,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -803,6 +1046,10 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
@@ -814,16 +1061,12 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 31
       },
-      "id": 10,
+      "id": 11,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ],
+          "calcs": ["mean", "max", "lastNotNull"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -841,7 +1084,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "container_fs_usage_bytes{image!=\"\", container_label_com_docker_compose_service=~\"$service\"}",
+          "expr": "container_fs_usage_bytes{host=~\"$host\", name=~\"$container\"}",
           "legendFormat": "{{name}} - {{device}}",
           "range": true,
           "refId": "A"
@@ -855,12 +1098,50 @@
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Container logs correlated with container metrics",
+      "description": "Container logs filtered by host and container",
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 39
+      },
+      "id": 7,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{host=~\"$host\", container_name=~\"$container\"} |= \"$search\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Container Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "description": "Error logs for selected containers",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 49
       },
       "id": 12,
       "options": {
@@ -880,48 +1161,39 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{container_name=~\"$container\"}",
+          "expr": "{host=~\"$host\", container_name=~\"$container\"} |~ \"(?i)error|exception|fail|fatal\" |= \"$search\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Container Logs",
+      "title": "Container Error Logs",
       "type": "logs"
     }
   ],
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [
-    "docker",
-    "containers",
-    "cadvisor"
-  ],
+  "tags": ["docker", "containers"],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(container_cpu_usage_seconds_total, container_label_com_docker_compose_service)",
+        "definition": "label_values(node_uname_info, host)",
         "hide": 0,
         "includeAll": true,
-        "label": "Service",
-        "multi": true,
-        "name": "service",
+        "multi": false,
+        "name": "host",
         "options": [],
         "query": {
-          "query": "label_values(container_cpu_usage_seconds_total, container_label_com_docker_compose_service)",
+          "query": "label_values(node_uname_info, host)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -933,35 +1205,47 @@
       {
         "current": {
           "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
+          "text": ["All"],
+          "value": ["$__all"]
         },
         "datasource": {
-          "type": "loki",
-          "uid": "loki"
+          "type": "prometheus",
+          "uid": "prometheus"
         },
-        "definition": "label_values(container_name)",
+        "definition": "label_values(container_cpu_usage_seconds_total{host=~\"$host\"}, name)",
         "hide": 0,
         "includeAll": true,
-        "label": "Container",
         "multi": true,
         "name": "container",
         "options": [],
         "query": {
-          "label": "container_name",
-          "refId": "LokiVariableQueryEditor-VariableQuery",
-          "stream": "",
-          "type": 1
+          "query": "label_values(container_cpu_usage_seconds_total{host=~\"$host\"}, name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "name": "search",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
       }
     ]
   },
@@ -971,7 +1255,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Container Monitoring",
+  "title": "CW Container Monitoring",
   "uid": "container-monitoring",
   "version": 1,
   "weekStart": ""

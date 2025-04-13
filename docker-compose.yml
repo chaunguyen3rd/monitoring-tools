@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 networks:
   cw-net:
@@ -25,9 +25,9 @@ services:
       - ./configs/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=15d'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
     ports:
       - "9090:9090"
     networks:
@@ -44,17 +44,17 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)"
     ports:
       - "9100:9100"
     networks:
       - cw-net
     dns:
       - 10.0.0.2
-    
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
@@ -119,7 +119,7 @@ services:
       - cw-net
     dns:
       - 10.0.0.2
-      
+
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
@@ -129,8 +129,8 @@ services:
       - ./configs/alertmanager/templates:/etc/alertmanager/templates
       - alertmanager_data:/alertmanager
     command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
     ports:
       - "9093:9093"
     networks:
