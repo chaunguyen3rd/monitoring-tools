@@ -33,7 +33,7 @@
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 1,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
@@ -116,7 +116,9 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -219,7 +221,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -320,7 +324,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -379,15 +385,21 @@
                 "operation": "groupby"
               },
               "Value #A": {
-                "aggregations": ["lastNotNull"],
+                "aggregations": [
+                  "lastNotNull"
+                ],
                 "operation": "aggregate"
               },
               "Value #B": {
-                "aggregations": ["lastNotNull"],
+                "aggregations": [
+                  "lastNotNull"
+                ],
                 "operation": "aggregate"
               },
               "Value #C": {
-                "aggregations": ["lastNotNull"],
+                "aggregations": [
+                  "lastNotNull"
+                ],
                 "operation": "aggregate"
               }
             }
@@ -444,7 +456,10 @@
       },
       "id": 5,
       "options": {
-        "displayLabels": ["name", "value"],
+        "displayLabels": [
+          "name",
+          "value"
+        ],
         "legend": {
           "displayMode": "list",
           "placement": "right",
@@ -452,7 +467,9 @@
         },
         "pieType": "pie",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -581,7 +598,9 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": ["sum"],
+          "reducer": [
+            "sum"
+          ],
           "show": false
         },
         "showHeader": true
@@ -718,14 +737,21 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["cluster", "overview"],
+  "tags": [
+    "cluster",
+    "overview"
+  ],
   "templating": {
     "list": [
       {
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "prometheus",

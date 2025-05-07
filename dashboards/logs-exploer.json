@@ -46,7 +46,7 @@
         "uid": "loki"
       },
       "gridPos": {
-        "h": 2,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
@@ -132,7 +132,10 @@
       "id": 2,
       "options": {
         "legend": {
-          "calcs": ["sum", "max"],
+          "calcs": [
+            "sum",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true
@@ -288,7 +291,10 @@
       "id": 3,
       "options": {
         "legend": {
-          "calcs": ["sum", "max"],
+          "calcs": [
+            "sum",
+            "max"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true
@@ -512,14 +518,21 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["logs", "loki"],
+  "tags": [
+    "logs",
+    "loki"
+  ],
   "templating": {
     "list": [
       {
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "prometheus",
@@ -544,8 +557,12 @@
       {
         "current": {
           "selected": true,
-          "text": ["All"],
-          "value": ["$__all"]
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "loki",
