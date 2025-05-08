@@ -6,7 +6,7 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://MONITORING_SERVER:3100/loki/api/v1/push
+  - url: http://monitor01.cw.internal:3100/loki/api/v1/push
 
 scrape_configs:
   # System logs
@@ -16,31 +16,93 @@ scrape_configs:
           - localhost
         labels:
           job: varlogs
-          host: "HOST_NAME"
+          host: "dev01.cw.internal"
           __path__: /var/log/*log
 
-  # Docker container logs
+  # Docker container logs - Main method
   - job_name: docker
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
     relabel_configs:
+      # Extract container name from Docker metadata
       - source_labels: ["__meta_docker_container_name"]
         regex: "/(.*)"
         target_label: "container_name"
+
+      # Extract stream type (stdout/stderr)
       - source_labels: ["__meta_docker_container_log_stream"]
         target_label: "stream"
+
+      # Extract container_name label if available
+      - source_labels: ["__meta_docker_container_label_container_name"]
+        target_label: "container_name"
+        regex: "(.*)"
+        replacement: "$1"
+        action: replace
+
+      # Set host label
       - target_label: "host"
-        replacement: "${HOSTNAME}"
+        replacement: "dev01.cw.internal"
+
     pipeline_stages:
+      # Parse JSON formatted logs
       - json:
           expressions:
             stream: stream
             log: log
-            attrs: attrs
             time: time
+
+      # Handle timestamps
       - timestamp:
           source: time
           format: RFC3339Nano
+          fallback_formats:
+            - RFC3339
+            - "2006-01-02T15:04:05.999999999Z07:00"
+
+      # Parse NestJS log format
+      - regex:
+          expression: '^\[Nest\]\s+\d+\s+-\s+(?P<timestamp>\d{2}/\d{2}/\d{4},\s+\d{1,2}:\d{2}:\d{2}\s+(?:AM|PM))\s+(?P<level>\w+)\s+(?P<message>.*)$'
+          source: log
+
+      # Output the log message
+      - output:
+          source: log
+
+  # Fallback for containers - Direct path method
+  - job_name: docker_fallback
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          host: "dev01.cw.internal"
+          __path__: /var/lib/docker/containers/*/*-json.log
+
+    pipeline_stages:
+      # Parse JSON logs
+      - json:
+          expressions:
+            stream: stream
+            log: log
+            time: time
+
+      # Get container ID from filename
+      - regex:
+          expression: "(?P<container_id>(?:[0-9a-f]{64}|[0-9a-f]{12}))"
+          source: filename
+
+      # Use Docker API to get container details
+      - docker:
+          container_name_label: container_name
+          stream_label: stream
+
+      # Parse timestamp
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+
+      # Output the log
       - output:
           source: log
