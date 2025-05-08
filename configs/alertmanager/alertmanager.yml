@@ -36,8 +36,9 @@ receivers:
         http_config:
           follow_redirects: true
         max_alerts: 10
-        title: '{{ if eq .Status "firing" }}🔥 {{ .CommonAnnotations.summary }}{{ else }}✅ {{ .CommonAnnotations.summary }}{{ end }}'
-        text: >-
+        message: |
+          {{ if eq .Status "firing" }}🔥 {{ .CommonAnnotations.summary }}{{ else }}✅ {{ .CommonAnnotations.summary }}{{ end }}
+
           {{ range .Alerts }}
           **Status:** {{ .Status }}
           **Severity:** {{ .Labels.severity }}
