@@ -33,3 +33,9 @@ receivers:
     webhook_configs:
       - url: "https://discord.com/api/webhooks/1369935547853701272/HhrTwnSHXQSqBOk-a7qyAbm-4YBYFFf4wcjUDbNGBl2HPSGK8iVb4XGGRU8cptrSNtil"
         send_resolved: true
+        http_config:
+          follow_redirects: true
+          headers:
+            Content-Type: application/json
+        max_alerts: 10
+        message: '{{ template "discord.default.message" . }}'
