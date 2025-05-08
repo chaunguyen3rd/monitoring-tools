@@ -1,6 +1,4 @@
-{{ define "discord.default.title" }}
-[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
-{{ end }}
+{{ define "discord.default.title" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}{{ end }}
 
 {{ define "discord.default.message" }}
 {{ range .Alerts }}
