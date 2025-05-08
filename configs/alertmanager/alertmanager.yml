@@ -1,6 +1,5 @@
 global:
   resolve_timeout: 5m
-  discord_api_url: "https://discord.com/api/webhooks/1369935547853701272/HhrTwnSHXQSqBOk-a7qyAbm-4YBYFFf4wcjUDbNGBl2HPSGK8iVb4XGGRU8cptrSNtil"
 
 templates:
   - "/etc/alertmanager/templates/*.tmpl"
@@ -32,7 +31,7 @@ inhibit_rules:
 receivers:
   - name: "discord-notifications"
     webhook_configs:
-      - url: "{{ .GlobalConfig.discord_api_url }}"
+      - url: "https://discord.com/api/webhooks/1369935547853701272/HhrTwnSHXQSqBOk-a7qyAbm-4YBYFFf4wcjUDbNGBl2HPSGK8iVb4XGGRU8cptrSNtil"
         send_resolved: true
         http_config:
           follow_redirects: true
