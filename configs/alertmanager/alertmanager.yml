@@ -36,7 +36,7 @@ receivers:
         http_config:
           follow_redirects: true
         max_alerts: 10
-        message: |
+        text: |
           {{ if eq .Status "firing" }}🔥 **FIRING** 🔥{{ else }}✅ **RESOLVED** ✅{{ end }}
           {{ if eq .Status "firing" }}**Alerts:** {{ .Alerts.Firing | len }}{{ end }}
 
