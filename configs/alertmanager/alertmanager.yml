@@ -35,7 +35,15 @@ receivers:
         send_resolved: true
         http_config:
           follow_redirects: true
-          headers:
-            Content-Type: application/json
         max_alerts: 10
-        message: '{{ template "discord.default.message" . }}'
+        title: '{{ if eq .Status "firing" }}🔥 {{ .CommonAnnotations.summary }}{{ else }}✅ {{ .CommonAnnotations.summary }}{{ end }}'
+        text: >-
+          {{ range .Alerts }}
+          **Status:** {{ .Status }}
+          **Severity:** {{ .Labels.severity }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Started:** {{ .StartsAt }}
+          {{ if ne .Status "firing" }}**Resolved:** {{ .EndsAt }}{{ end }}
+          **Instance:** {{ .Labels.instance }}
+          {{ end }}
