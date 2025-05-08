@@ -1,0 +1,13 @@
+{{ define "discord.default.title" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+{{ end }}
+
+{{ define "discord.default.message" }}
+{{ range .Alerts }}
+**Alert:** {{ .Annotations.summary }}
+{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}{{ end }}
+**Severity:** {{ .Labels.severity }}
+**Instance:** {{ .Labels.instance }}
+**Started:** {{ .StartsAt }}
+{{ end }}
+{{ end }}
