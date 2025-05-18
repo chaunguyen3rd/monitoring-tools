@@ -100,7 +100,7 @@ services:
     dns:
       - 10.0.0.2
     environment:
-      - MONITOR_HOST=monitor01.cw.internal
+      - MONITOR_HOST=${MONITOR_HOST}
 
   grafana:
     image: grafana/grafana:latest
