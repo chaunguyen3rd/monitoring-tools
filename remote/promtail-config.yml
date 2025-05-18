@@ -106,3 +106,23 @@ scrape_configs:
       # Output the log
       - output:
           source: log
+
+  - job_name: nginx_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          host: "fe01.cw.internal" # Or use appropriate hostname placeholder
+          __path__: /var/log/nginx/*log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>.*?)\] "(?P<method>\S+) (?P<request>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+      - labels:
+          status:
+          method:
+      - timestamp:
+          source: time_local
+          format: 02/Jan/2006:15:04:05 -0700
+      - output:
+          source: message
