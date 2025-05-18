@@ -6,7 +6,7 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://monitor01.cw.internal:3100/loki/api/v1/push
+  - url: http://${MONITOR_HOST}:3100/loki/api/v1/push
 
 scrape_configs:
   # System logs
@@ -16,8 +16,31 @@ scrape_configs:
           - localhost
         labels:
           job: varlogs
-          host: "dev01.cw.internal"
+          host: "${FRONTEND_HOST}"
           __path__: /var/log/*log
+
+  # Nginx logs - Added specifically for frontend server
+  - job_name: nginx_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          host: "${FRONTEND_HOST}"
+          __path__: /var/log/nginx/*log
+    pipeline_stages:
+      - regex:
+          expression: '(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>.*?)\] "(?P<method>\S+) (?P<request>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+      - labels:
+          status:
+          method:
+          remote_addr:
+          request:
+      - timestamp:
+          source: time_local
+          format: 02/Jan/2006:15:04:05 -0700
+      - output:
+          source: message
 
   # Docker container logs - Main method
   - job_name: docker
@@ -43,7 +66,7 @@ scrape_configs:
 
       # Set host label
       - target_label: "host"
-        replacement: "dev01.cw.internal"
+        replacement: "${FRONTEND_HOST}"
 
     pipeline_stages:
       # Parse JSON formatted logs
@@ -77,7 +100,7 @@ scrape_configs:
           - localhost
         labels:
           job: docker
-          host: "dev01.cw.internal"
+          host: "${FRONTEND_HOST}"
           __path__: /var/lib/docker/containers/*/*-json.log
 
     pipeline_stages:
@@ -106,26 +129,3 @@ scrape_configs:
       # Output the log
       - output:
           source: log
-
-  # Nginx logs specific configuration
-  - job_name: nginx_logs
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: nginx
-          host: "fe01.cw.internal"
-          __path__: /var/log/nginx/*log
-    pipeline_stages:
-      - regex:
-          expression: '(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>.*?)\] "(?P<method>\S+) (?P<request>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
-      - labels:
-          status:
-          method:
-          remote_addr:
-          request:
-      - timestamp:
-          source: time_local
-          format: 02/Jan/2006:15:04:05 -0700
-      - output:
-          source: message

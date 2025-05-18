@@ -13,58 +13,58 @@ rule_files:
   - "alert-rules.yml"
 
 scrape_configs:
-  # Monitoring Server (monitor01) - Prometheus itself
+  # Monitoring Server (${MONITOR_HOST}) - Prometheus itself
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
         labels:
-          host: "monitor01.cw.internal"
+          host: "${MONITOR_HOST}"
           instance_group: "monitoring"
 
-  # Monitoring Server (monitor01) - Node Exporter
-  - job_name: "monitor01-node-exporter"
+  # Monitoring Server (${MONITOR_HOST}) - Node Exporter
+  - job_name: "${MONITOR_HOST}-node-exporter"
     static_configs:
       - targets: ["node-exporter:9100"]
         labels:
-          host: "monitor01.cw.internal"
+          host: "${MONITOR_HOST}"
           instance_group: "monitoring"
 
-  # Monitoring Server (monitor01) - cAdvisor
-  - job_name: "monitor01-cadvisor"
+  # Monitoring Server (${MONITOR_HOST}) - cAdvisor
+  - job_name: "${MONITOR_HOST}-cadvisor"
     static_configs:
       - targets: ["cadvisor:8080"]
         labels:
-          host: "monitor01.cw.internal"
+          host: "${MONITOR_HOST}"
           instance_group: "monitoring"
 
-  # Dev Server (dev01) - Node Exporter
-  - job_name: "dev01-node-exporter"
+  # Dev Server (${DEV_HOST}) - Node Exporter
+  - job_name: "${DEV_HOST}-node-exporter"
     static_configs:
-      - targets: ["dev01.cw.internal:9100"]
+      - targets: ["${DEV_HOST}:9100"]
         labels:
-          host: "dev01.cw.internal"
+          host: "${DEV_HOST}"
           instance_group: "application"
 
-  # Dev Server (dev01) - cAdvisor
-  - job_name: "dev01-cadvisor"
+  # Dev Server (${DEV_HOST}) - cAdvisor
+  - job_name: "${DEV_HOST}-cadvisor"
     static_configs:
-      - targets: ["dev01.cw.internal:8080"]
+      - targets: ["${DEV_HOST}:8080"]
         labels:
-          host: "dev01.cw.internal"
+          host: "${DEV_HOST}"
           instance_group: "application"
 
-  # Frontend Server (fe01) - Node Exporter
-  - job_name: "fe01-node-exporter"
+  # Frontend Server (${FRONTEND_HOST}) - Node Exporter
+  - job_name: "${FRONTEND_HOST}-node-exporter"
     static_configs:
-      - targets: ["fe01.cw.internal:9100"]
+      - targets: ["${FRONTEND_HOST}:9100"]
         labels:
-          host: "fe01.cw.internal"
+          host: "${FRONTEND_HOST}"
           instance_group: "frontend"
 
-  # Frontend Server (fe01) - cAdvisor
-  - job_name: "fe01-cadvisor"
+  # Frontend Server (${FRONTEND_HOST}) - cAdvisor
+  - job_name: "${FRONTEND_HOST}-cadvisor"
     static_configs:
-      - targets: ["fe01.cw.internal:8080"]
+      - targets: ["${FRONTEND_HOST}:8080"]
         labels:
-          host: "fe01.cw.internal"
+          host: "${FRONTEND_HOST}"
           instance_group: "frontend"

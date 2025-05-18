@@ -1,6 +1,6 @@
 # CW Server Cluster Monitoring Stack
 
-A complete monitoring solution for monitoring multiple hosts and Docker containers across your server infrastructure. This stack is configured specifically for the CW server cluster that includes:
+A complete monitoring solution for multiple hosts and Docker containers across your server infrastructure. This stack is configured specifically for the CW server cluster that includes:
 
 - `monitor01.cw.internal` - Main monitoring server
 - `dev01.cw.internal` - Development server with Docker containers
@@ -15,6 +15,7 @@ A complete monitoring solution for monitoring multiple hosts and Docker containe
 - **Node Exporter**: Host-level metrics collection
 - **cAdvisor**: Container metrics collection
 - **Promtail**: Log collection agent
+- **AlertManager Discord**: Discord notification integration
 
 ## Quick Start
 
@@ -27,54 +28,80 @@ A complete monitoring solution for monitoring multiple hosts and Docker containe
    cd cw-monitoring
    ```
 
-2. Make the installation script executable:
+2. Edit the `.env` file to configure your environment:
 
    ```bash
-   chmod +x install.sh
+   nano .env
    ```
 
-3. Run the installation script:
+   Update the following variables:
+   - Host names (MONITOR_HOST, DEV_HOST, FRONTEND_HOST)
+   - Grafana credentials
+   - Discord webhook URL for alerts
+   - Other configuration parameters as needed
+
+3. Start the monitoring stack:
 
    ```bash
-   sudo ./install.sh
+   docker-compose up -d
    ```
-
-4. Follow the prompts to configure your monitoring stack:
-   - Enter your monitoring server hostname (default: monitor01.cw.internal)
-   - Enter your remote host names (defaults: dev01.cw.internal and fe01.cw.internal)
-   - Configure Grafana credentials (defaults: admin/admin)
-
-5. The monitoring stack will start on your main server.
 
 ### Setting Up Remote Hosts
 
 After installing the main monitoring server, you need to set up monitoring agents on your remote hosts:
 
-1. Copy the generated remote setup script to each remote host:
+1. Copy the remote setup files to each remote host:
 
    ```bash
-   scp remote-setup.sh user@dev01.cw.internal:~/
-   scp remote-setup.sh user@fe01.cw.internal:~/
+   scp -r remote/docker-compose.yml user@dev01.cw.internal:~/monitoring/
+   scp -r remote/promtail-config.yml user@dev01.cw.internal:~/monitoring/
    ```
 
-2. SSH into each remote host and run the setup script:
+   For the frontend server with Nginx:
+
+   ```bash
+   scp -r remote/docker-compose.yml user@fe01.cw.internal:~/monitoring/
+   scp -r remote/promtail-config.yml user@fe01.cw.internal:~/monitoring/
+   ```
+
+2. Create a simple `.env` file on each remote host:
+
+   For development server:
+
+   ```bash
+   cat > ~/monitoring/.env << EOL
+   MONITOR_HOST=monitor01.cw.internal
+   DEV_HOST=dev01.cw.internal
+   DNS_SERVER=10.0.0.2
+   EOL
+   ```
+
+   For frontend server:
+
+   ```bash
+   cat > ~/monitoring/.env << EOL
+   MONITOR_HOST=monitor01.cw.internal
+   FRONTEND_HOST=fe01.cw.internal
+   DNS_SERVER=10.0.0.2
+   EOL
+   ```
+
+3. SSH into each remote host and start the monitoring agents:
 
    ```bash
    ssh user@dev01.cw.internal
-   chmod +x remote-setup.sh
-   sudo ./remote-setup.sh
+   cd ~/monitoring
+   docker-compose up -d
    ```
 
-3. When prompted, enter your main monitoring server hostname (monitor01.cw.internal).
-
-4. Repeat for all remote hosts.
+   Repeat for all remote hosts.
 
 ## Accessing the Interfaces
 
 After installation, you can access the following web interfaces:
 
 - **Grafana**: `http://monitor01.cw.internal:3000`
-  - Credentials: as configured during installation (default: admin/admin)
+  - Credentials: as configured in `.env` (default: admin/admin)
 - **Prometheus**: `http://monitor01.cw.internal:9090`
 - **AlertManager**: `http://monitor01.cw.internal:9093`
 
@@ -98,6 +125,13 @@ The monitoring stack comes with pre-configured dashboards:
    - Search across all hosts and containers
    - Error and warning filtering
    - Special section for Nginx logs from the frontend server
+
+4. **Nginx Monitoring**
+   - HTTP status code distribution
+   - Request rate monitoring
+   - Top requested URLs and client IPs
+   - Error tracking
+   - Full Nginx access and error log viewing
 
 ## Monitoring Structure
 
@@ -124,47 +158,57 @@ This monitoring stack is configured specifically for your three-server setup:
 
 ### Adding More Remote Hosts
 
-1. Edit the Prometheus configuration:
+1. Edit the `.env` file to define the new host name
 
-   ```bash
-   nano configs/prometheus/prometheus.yml
-   ```
-
-2. Add new scrape configurations for the additional host:
+2. Edit the Prometheus configuration (`configs/prometheus/prometheus.yml`):
 
    ```yaml
    # New Remote Host - Node Exporter
    - job_name: "newhost-node-exporter"
      static_configs:
-       - targets: ["newhost.cw.internal:9100"]
+       - targets: ["${NEW_HOST}:9100"]
          labels:
-           host: "newhost.cw.internal"
+           host: "${NEW_HOST}"
            instance_group: "your-group-name"
 
    # New Remote Host - cAdvisor
    - job_name: "newhost-cadvisor"
      static_configs:
-       - targets: ["newhost.cw.internal:8080"]
+       - targets: ["${NEW_HOST}:8080"]
          labels:
-           host: "newhost.cw.internal"
+           host: "${NEW_HOST}"
            instance_group: "your-group-name"
    ```
 
-3. Reload Prometheus configuration:
+3. Restart Prometheus:
 
    ```bash
-   curl -X POST http://monitor01.cw.internal:9090/-/reload
+   docker-compose restart prometheus
    ```
 
-4. Run the remote setup script on the new host.
+4. Set up the remote host with the monitoring agents.
 
 ### Customizing Alerts
 
 Edit the alert rules in `configs/prometheus/alert-rules.yml` to customize monitoring thresholds.
 
-### Customizing Email Notifications
+### Customizing Discord Notifications
 
-Edit `configs/alertmanager/alertmanager.yml` to configure recipients and SMTP settings for alert notifications.
+The stack integrates with Discord for alert notifications. The integration is configured in:
+
+1. The `.env` file (for the webhook URL)
+2. The Alertmanager configuration (`configs/alertmanager/alertmanager.yml`)
+
+You can customize alert templates in `configs/alertmanager/templates/` to change the format and content of notifications.
+
+## Backup and Restore
+
+The monitoring stack includes backup scripts in the `backup/` directory:
+
+- `backup.sh`: Script to create and upload backups to S3
+- `restore.sh`: Script to download and restore backups from S3
+
+See `backup/README.md` for detailed backup configuration and usage instructions.
 
 ## Troubleshooting
 
@@ -195,3 +239,13 @@ docker-compose logs prometheus
    - Verify data source connections in Grafana
    - Check queries in the dashboard panels
    - Ensure metrics are being collected (check Prometheus targets)
+
+4. **Environment variable not being applied**
+   - Make sure the `.env` file is in the same directory as your docker-compose.yml
+   - Check that you're using the correct variable names in configuration files
+   - Try running with `docker-compose --env-file .env up -d` to explicitly specify the env file
+
+5. **Nginx logs not appearing**
+   - Ensure Promtail has read access to `/var/log/nginx/`
+   - Check that the Nginx log format matches what's expected in the Promtail config
+   - Verify that the Nginx logs job is correctly configured in Promtail
