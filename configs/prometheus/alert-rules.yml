@@ -108,15 +108,26 @@ groups:
 
   - name: container_alerts
     rules:
-      # Container down alert
+      # Container down alert - Fixed to detect individual container removal
       - alert: ContainerDown
-        expr: absent(container_last_seen{name=~".+"})
+        expr: absent(container_last_seen{name="workspace-web-lab03-container"})
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container workspace-web-lab03-container is down"
+          description: "Container workspace-web-lab03-container has been down for more than 30 seconds"
+          dashboard: "https://monitor01.cw.internal:3000/d/container-monitoring"
+
+      # General container down detection
+      - alert: ContainerMissing
+        expr: count by(name, host) (container_last_seen{name=~".+"}) unless count by(name, host) (container_last_seen{name=~".+"} offset 5m)
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "Container {{ $labels.name }} on {{ $labels.host }} is down"
-          description: "Container {{ $labels.name }} has been down for more than 1 minute"
+          summary: "Container {{ $labels.name }} on {{ $labels.host }} has disappeared"
+          description: "Container {{ $labels.name }} was present 5 minutes ago but is now missing"
           dashboard: "https://monitor01.cw.internal:3000/d/container-monitoring"
 
       # Container restart alerts
