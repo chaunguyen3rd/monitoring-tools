@@ -120,19 +120,14 @@ services:
     dns:
       - 10.0.0.2
 
-  alertmanager:
-    image: prom/alertmanager:latest
-    container_name: alertmanager
+  alertmanager-discord:
+    image: benjojo/alertmanager-discord:latest
+    container_name: alertmanager-discord
     restart: unless-stopped
-    volumes:
-      - ./configs/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
-      - ./configs/alertmanager/templates:/etc/alertmanager/templates
-      - alertmanager_data:/alertmanager
-    command:
-      - "--config.file=/etc/alertmanager/alertmanager.yml"
-      - "--storage.path=/alertmanager"
     ports:
-      - "9093:9093"
+      - "9094:9094"
+    environment:
+      - DISCORD_WEBHOOK=https://discord.com/api/webhooks/1369935547853701272/HhrTwnSHXQSqBOk-a7qyAbm-4YBYFFf4wcjUDbNGBl2HPSGK8iVb4XGGRU8cptrSNtil
     networks:
       - cw-net
     dns:
