@@ -28,7 +28,7 @@ services:
     networks:
       - cw-net
     dns:
-      - ${DNS_SERVER:-10.0.0.2}
+      - 10.0.0.2
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -45,7 +45,7 @@ services:
     networks:
       - cw-net
     dns:
-      - ${DNS_SERVER:-10.0.0.2}
+      - 10.0.0.2
 
   promtail:
     image: grafana/promtail:latest
@@ -60,8 +60,8 @@ services:
     networks:
       - cw-net
     dns:
-      - ${DNS_SERVER:-10.0.0.2}
+      - 10.0.0.2
     environment:
-      - HOST_NAME=${HOST_NAME}
-      - MONITOR_HOST=${MONITOR_HOST}
-      - LOKI_PORT=${LOKI_PORT:-3100}
+      - HOST_NAME=${HOST_NAME} # This should be replaced with the actual host name in each deployment
+      - MONITOR_HOST=monitor01.cw.internal
+      - LOKI_PORT=3100

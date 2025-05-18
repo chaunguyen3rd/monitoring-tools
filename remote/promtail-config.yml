@@ -6,7 +6,7 @@ positions:
   filename: /tmp/positions.yaml
 
 clients:
-  - url: http://${MONITOR_HOST}:3100/loki/api/v1/push
+  - url: http://monitor01.cw.internal:3100/loki/api/v1/push
 
 scrape_configs:
   # System logs
@@ -16,7 +16,7 @@ scrape_configs:
           - localhost
         labels:
           job: varlogs
-          host: "${FRONTEND_HOST}"
+          host: "fe01.cw.internal"
           __path__: /var/log/*log
 
   # Nginx logs - Added specifically for frontend server
@@ -26,7 +26,7 @@ scrape_configs:
           - localhost
         labels:
           job: nginx
-          host: "${FRONTEND_HOST}"
+          host: "fe01.cw.internal"
           __path__: /var/log/nginx/*log
     pipeline_stages:
       - regex:
@@ -66,7 +66,7 @@ scrape_configs:
 
       # Set host label
       - target_label: "host"
-        replacement: "${FRONTEND_HOST}"
+        replacement: "fe01.cw.internal"
 
     pipeline_stages:
       # Parse JSON formatted logs
@@ -100,7 +100,7 @@ scrape_configs:
           - localhost
         labels:
           job: docker
-          host: "${FRONTEND_HOST}"
+          host: "fe01.cw.internal"
           __path__: /var/lib/docker/containers/*/*-json.log
 
     pipeline_stages:

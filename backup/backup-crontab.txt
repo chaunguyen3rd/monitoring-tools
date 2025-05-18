@@ -1,9 +1,0 @@
-# Monitoring Stack Backup Crontab
-# Runs incremental backups daily at 23:00 UTC except Sunday
-# Runs full backup on Sunday at 23:00 UTC
-
-# Daily incremental backup at 23:00 UTC Monday through Saturday
-0 23 * * 1-6 /Users/chaunguyen/Desktop/devops/monitoring-tools/backup/backup.sh > /tmp/backup-incremental.log 2>&1
-
-# Full backup every Sunday at 23:00 UTC
-0 23 * * 0 /Users/chaunguyen/Desktop/devops/monitoring-tools/backup/backup.sh -f > /tmp/backup-full.log 2>&1
