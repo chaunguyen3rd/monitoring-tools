@@ -243,27 +243,3 @@ groups:
           summary: "High number of active connections on {{ $labels.host }}"
           description: "Nginx has a high number of active connections (current value: {{ $value }})"
           dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
-
-  - name: loki_alerts
-    rules:
-      # Alerts based on log patterns
-      - alert: HighErrorLogsRate
-        expr: sum(count_over_time({job=~".+", host=~".+"} |~ "(?i)error|exception|fail|fatal"[5m])) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High rate of error logs"
-          description: "There have been {{ $value }} error logs in the last 5 minutes"
-          dashboard: "https://monitor01.cw.internal:3000/d/logs-explorer"
-
-      # Specific application error detection
-      - alert: ApplicationCrashDetected
-        expr: sum(count_over_time({job=~".+", host=~".+"} |~ "(?i)process (crashed|killed|stopped|terminated unexpectedly)"[15m])) > 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Application crash detected"
-          description: "{{ $value }} application crashes detected in the logs in the last 15 minutes"
-          dashboard: "https://monitor01.cw.internal:3000/d/logs-explorer"
