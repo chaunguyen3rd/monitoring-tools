@@ -458,7 +458,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{job=\"nginx\", host=~\"$host\"} |= \"$search\" |~ \"(GET|POST|PUT|DELETE|HEAD|OPTIONS).*HTTP\" | line_format \"{{.message}}\" | pattern \"<(?P<method>GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)> <(?P<path>[^>]+)> <(?P<status>[0-9]{3})>\"",
+          "expr": "{job=\"nginx\", host=~\"$host\"} |= \"$search\" |~ \"(GET|POST|PUT|DELETE|HEAD|OPTIONS).*HTTP\" | regexp \"(?P<remote_addr>[\\d\\.]+).*(?P<method>GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH) (?P<request>[^ ]+) HTTP\\/[\\d\\.]+\\\" (?P<status>\\d{3})\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -496,7 +496,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{job=\"nginx\", host=~\"$host\"} |= \"$search\" |~ \"(error|warn|crit|alert|emerg)\" | line_format \"{{.message}}\" | pattern \"<(?P<method>GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)> <(?P<path>[^>]+)> <(?P<status>[0-9]{3})>\"",
+          "expr": "{job=\"nginx\", host=~\"$host\"} |= \"$search\" |~ \"(error|warn|crit|alert|emerg)\" | regexp \"(?P<remote_addr>[\\d\\.]+).*(?P<method>GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)? ?(?P<request>[^ ]*) (?P<status>\\d{3})?\"",
           "queryType": "range",
           "refId": "A"
         }
