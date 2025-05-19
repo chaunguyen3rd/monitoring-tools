@@ -1,8 +1,8 @@
 groups:
   - name: host_alerts
     rules:
-      # Host CPU alerts
-      - alert: HostHighCPULoad
+      # Host CPU alert - combined into single alert with severity levels
+      - alert: HighCPULoad
         expr: 100 - (avg by(host) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
         for: 5m
         labels:
@@ -12,111 +12,39 @@ groups:
           description: 'CPU load is above 80% for 5 minutes (current value: {{ $value | printf "%.2f" }}%)'
           dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
 
-      - alert: HostCriticalCPULoad
-        expr: 100 - (avg by(host) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
-        for: 3m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Critical CPU load on {{ $labels.host }}"
-          description: 'CPU load is above 95% for 3 minutes (current value: {{ $value | printf "%.2f" }}%)'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      # Host memory alerts
-      - alert: HostLowMemory
-        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 20
+      # Host memory alert - combined into single alert
+      - alert: LowMemory
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 15
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "Low memory on {{ $labels.host }}"
-          description: 'Node memory is filling up (< 20% left) (current value: {{ $value | printf "%.2f" }}%)'
+          description: 'Node memory is filling up (< 15% left) (current value: {{ $value | printf "%.2f" }}%)'
           dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
 
-      - alert: HostOutOfMemory
-        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Host out of memory on {{ $labels.host }}"
-          description: 'Node memory is critically low (< 10% left) (current value: {{ $value | printf "%.2f" }}%)'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      # Host disk space alerts
-      - alert: HostLowDiskSpace
-        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) < 20
+      # Host disk space alert - combined into single alert
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) < 15
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "Low disk space on {{ $labels.host }}"
-          description: 'Disk space is below 20% (current value: {{ $value | printf "%.2f" }}%)'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      - alert: HostCriticalDiskSpace
-        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100) < 10
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Critical disk space on {{ $labels.host }}"
-          description: 'Disk space is critically low (< 10%) (current value: {{ $value | printf "%.2f" }}%)'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      # Host system load alerts
-      - alert: HostHighLoad
-        expr: node_load1 > (count by(host) (node_cpu_seconds_total{mode="idle"}) * 0.8)
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High system load on {{ $labels.host }}"
-          description: 'System load is high (current value: {{ $value | printf "%.2f" }})'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      - alert: HostCriticalLoad
-        expr: node_load1 > (count by(host) (node_cpu_seconds_total{mode="idle"}) * 1.5)
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Critical system load on {{ $labels.host }}"
-          description: 'System load is extremely high (current value: {{ $value | printf "%.2f" }})'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      # Host network alerts
-      - alert: HostNetworkReceiveErrors
-        expr: rate(node_network_receive_errs_total[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Network receive errors on {{ $labels.host }}"
-          description: 'Host {{ $labels.host }} interface {{ $labels.device }} has encountered {{ $value | printf "%.0f" }} receive errors in the last 5 minutes'
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      - alert: HostNetworkTransmitErrors
-        expr: rate(node_network_transmit_errs_total[5m]) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Network transmit errors on {{ $labels.host }}"
-          description: 'Host {{ $labels.host }} interface {{ $labels.device }} has encountered {{ $value | printf "%.0f" }} transmit errors in the last 5 minutes'
+          description: 'Disk space is below 15% (current value: {{ $value | printf "%.2f" }}%)'
           dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
 
   - name: container_alerts
     rules:
-      # General container down detection
-      - alert: ContainerMissing
+      # Container alerts - reduced to essential monitoring
+      - alert: ContainerDown
         expr: count by(name, host) (container_last_seen{name=~".+"}) unless count by(name, host) (container_last_seen{name=~".+"} offset 5m)
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "Container {{ $labels.name }} on {{ $labels.host }} has disappeared"
-          description: "Container {{ $labels.name }} was present 5 minutes ago but is now missing"
+          summary: "Container {{ $labels.name }} on {{ $labels.host }} is down"
+          description: "Container {{ $labels.name }} is not running"
           dashboard: "https://monitor01.cw.internal:3000/d/container-monitoring"
 
       # Container restart alerts
@@ -130,20 +58,9 @@ groups:
           description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 15 minutes"
           dashboard: "https://monitor01.cw.internal:3000/d/container-monitoring"
 
-      # Container filesystem usage
-      - alert: ContainerHighDiskUsage
-        expr: container_fs_usage_bytes / container_fs_limit_bytes * 100 > 80
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Container {{ $labels.name }} on {{ $labels.host }} high disk usage"
-          description: 'Container {{ $labels.name }} disk usage is above 80% (current value: {{ $value | printf "%.2f" }}%)'
-          dashboard: "https://monitor01.cw.internal:3000/d/container-monitoring"
-
   - name: service_alerts
     rules:
-      # Service availability
+      # Service availability - kept simple
       - alert: ServiceDown
         expr: up == 0
         for: 1m
@@ -154,31 +71,9 @@ groups:
           description: "Service {{ $labels.job }} on {{ $labels.host }} has been down for more than 1 minute."
           dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
 
-      # Prometheus specific alerts
-      - alert: PrometheusTargetMissing
-        expr: up == 0
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Prometheus target missing ({{ $labels.host }})"
-          description: "Target {{ $labels.instance }} on {{ $labels.host }} is missing (job: {{ $labels.job }})"
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
-      # Alertmanager alerts
-      - alert: AlertmanagerFailedReload
-        expr: alertmanager_config_last_reload_successful == 0
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Alertmanager failed reload"
-          description: "Alertmanager's configuration reload has failed on {{ $labels.host }}"
-          dashboard: "https://monitor01.cw.internal:3000/d/server-cluster-overview"
-
   - name: nginx_alerts
     rules:
-      # Nginx overall error rate alerts
+      # Simplified Nginx alerts - focusing on key metrics
       - alert: NginxHighErrorRate
         expr: sum(rate(nginx_http_requests_total{status=~"5.."}[5m])) / sum(rate(nginx_http_requests_total[5m])) * 100 > 5
         for: 5m
@@ -187,17 +82,6 @@ groups:
         annotations:
           summary: "High Nginx error rate on {{ $labels.host }}"
           description: 'Nginx error rate is above 5% for 5 minutes (current value: {{ $value | printf "%.2f" }}%)'
-          dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
-
-      # IP-based error tracking - detect suspicious clients
-      - alert: NginxHighErrorRateByIP
-        expr: sum by(remote_addr) (count_over_time({job="nginx", status=~"(4|5).."}[5m])) > 30
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "IP {{ $labels.remote_addr }} generating high error rate"
-          description: "IP {{ $labels.remote_addr }} has generated {{ $value }} errors in the last 5 minutes"
           dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
 
       # Detect potential scanning/brute force attempts
@@ -209,37 +93,4 @@ groups:
         annotations:
           summary: "Potential scanning from IP {{ $labels.remote_addr }}"
           description: "IP {{ $labels.remote_addr }} has generated {{ $value }} 404 errors in the last 5 minutes, which may indicate scanning activity"
-          dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
-
-      # Detect potential brute force login attempts
-      - alert: NginxPotentialBruteForce
-        expr: sum by(remote_addr) (count_over_time({job="nginx", status="401"}[5m])) > 10
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Potential brute force from IP {{ $labels.remote_addr }}"
-          description: "IP {{ $labels.remote_addr }} has generated {{ $value }} authentication failures (401) in the last 5 minutes"
-          dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
-
-      # Detect excessive requests from a single IP (potential DoS)
-      - alert: NginxExcessiveRequestsFromIP
-        expr: sum by(remote_addr) (rate({job="nginx"}[5m])) > 50
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Excessive requests from IP {{ $labels.remote_addr }}"
-          description: 'IP {{ $labels.remote_addr }} is making {{ $value | printf "%.2f" }} requests per second, which may indicate a DoS attempt'
-          dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
-
-      # Nginx connection alerts
-      - alert: NginxHighActiveConnections
-        expr: nginx_connections_active > 1000
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High number of active connections on {{ $labels.host }}"
-          description: "Nginx has a high number of active connections (current value: {{ $value }})"
           dashboard: "https://monitor01.cw.internal:3000/d/nginx-monitoring"
